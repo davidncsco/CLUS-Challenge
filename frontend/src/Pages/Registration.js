@@ -13,16 +13,16 @@ const USER_REGEX = /^[A-z][A-z0-9-_]{2,24}$/;
 const EMAIL_REGEX = /^[A-Za-z0-9]+[._]?[A-Za-z0-9]+[@]\w+[. ]\w{2,3}$/;
 
 const RegisterRectangle = styled.div`
-width: 400px;
-height: 460px;
-overflow: hidden;
-position: relative;
-box-shadow: -3px 3px 7px #00000075, 3px 3px 7px #00000075, 3px -3px 7px #00000075, -3px -3px 7px #00000075;
-margin: 0px auto;
-margin-top: -100px;
-text-align: center;
-background-attachment: fixed;
-padding: 15px;
+    width: 400px;
+    height: 460px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: -3px 3px 7px #00000075, 3px 3px 7px #00000075, 3px -3px 7px #00000075, -3px -3px 7px #00000075;
+    margin: 0px auto;
+    margin-top: 20px;
+    text-align: center;
+    background-attachment: fixed;
+    padding: 15px;
 `;
 
 const Registration = () => {

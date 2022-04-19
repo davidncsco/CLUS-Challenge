@@ -14,7 +14,8 @@ html {
 
 body {
   min-height: 100vh;
-  background-color: #ab47bc;
+  background-image: url('../Assets/theme-background.png');
+  background-size: 120%;
 }
 
 .App {

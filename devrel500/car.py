@@ -1,11 +1,36 @@
 from fastapi import Request,FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from uvicorn import run
 from PCA9685 import PCA9685
-import os.path,sys,time,socket,json,argparse,default
 import RPi.GPIO as GPIO
-#import default.py from current directory to get default values
+import os.path,sys,time,json,argparse,socket,default
+#import default.py from current directoty to get default values
+
+################# Buzzer ################
+
+GPIO.setwarnings(False)
+Buzzer_Pin = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(Buzzer_Pin,GPIO.OUT)
+class Buzzer:
+    def run(self,command):
+        if command!="0":
+            GPIO.output(Buzzer_Pin,True)
+        else:
+            GPIO.output(Buzzer_Pin,False)
+    def beep(self,sec):
+        count=0
+        while count<sec:
+            GPIO.output(Buzzer_Pin,True)
+            time.sleep(default.WEIGHTBASEUNIT*0.5)
+            GPIO.output(Buzzer_Pin,False)
+            time.sleep(default.WEIGHTBASEUNIT*0.5)
+            count=count+1
+
+
+
+buzzer=Buzzer()
+
 
 ############### car control #################
 class Motor:
@@ -16,24 +41,24 @@ class Motor:
         if duty1>4095:
             duty1=4095
         elif duty1<-4095:
-            duty1=-4095        
-        
+            duty1=-4095
+
         if duty2>4095:
             duty2=4095
         elif duty2<-4095:
             duty2=-4095
-            
+
         if duty3>4095:
             duty3=4095
         elif duty3<-4095:
             duty3=-4095
-            
+
         if duty4>4095:
             duty4=4095
         elif duty4<-4095:
             duty4=-4095
         return duty1,duty2,duty3,duty4
-        
+
     def left_Upper_Wheel(self,duty):
         if duty>0:
             self.pwm.setMotorPwm(0,0)
@@ -74,41 +99,29 @@ class Motor:
         else:
             self.pwm.setMotorPwm(4,4095)
             self.pwm.setMotorPwm(5,4095)
-            
- 
+
+
     def setMotorModel(self,duty1,duty2,duty3,duty4):
         duty1,duty2,duty3,duty4=self.duty_range(duty1,duty2,duty3,duty4)
         self.left_Upper_Wheel(-duty1)
         self.left_Lower_Wheel(-duty2)
         self.right_Upper_Wheel(-duty3)
         self.right_Lower_Wheel(-duty4)
-            
-GPIO.setwarnings(False)
-Buzzer_Pin = 17
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(Buzzer_Pin,GPIO.OUT)
-class Buzzer:
-    def run(self,command):
-        if command!="0":
-            GPIO.output(Buzzer_Pin,True)
-        else:
-            GPIO.output(Buzzer_Pin,False)
 
-BUZZER=Buzzer()
-      
+
 #for the loop
 #PWM.setMotorModel(2000,2000,2000,2000)       #Forward
 #PWM.setMotorModel(-2000,-2000,-2000,-2000)   #Back
-#PWM.setMotorModel(-500,-500,2000,2000)       #Left 
-#PWM.setMotorModel(2000,2000,-500,-500)       #Right    
+#PWM.setMotorModel(-500,-500,2000,2000)       #Left
+#PWM.setMotorModel(2000,2000,-500,-500)       #Right
 #time.sleep(3)
 #PWM.setMotorModel(0,0,0,0)                   #Stop
-    
+
 ################################ DO NOT MODIFY THE CODE ABOVE #################################
 
 
 """ REST API server, taking instruction from API request """
-PWM=Motor()   
+PWM=Motor()
 
 # for quick debuging
 def dprint(*objects):
@@ -116,16 +129,6 @@ def dprint(*objects):
         print(*objects)
 
 app = FastAPI()
-
-# for handling the pre-flight
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-
 
 # just for fun and quick testing
 @app.get("/",description = "Just the fun and quick test",name="")
@@ -148,7 +151,7 @@ async def parse_request(request: Request,wheel: default.Wheel):
         weight = req_data["weight"]
         if weight < default.WEIGHTMIN or weight > default.WEIGHTMAX:
             dprint ("\nweight is not in the range, set to default")
-            weight = default.WEIGHTMIN # set to default 
+            weight = default.WEIGHTMIN # set to default
     else:
         weight = default.WEIGHTMIN   # set to default
         dprint ("\nweight not found, set to default")
@@ -164,51 +167,50 @@ async def parse_request(request: Request,wheel: default.Wheel):
         duty = req_data["speed"]
         if duty < default.SPEEDMIN or duty > default.SPEEDMAX:
             dprint ("\nspeed is not in the range, set to default")
-            duty = default.SPEED # set to default 
+            duty = default.SPEED # set to default
     else:
          duty = default.SPEED
          dprint ("\nspeed not found, set to default")
     dprint ("\nData send to car,weight=%d,direction=%s,speed=%d\n"%(weight,direction,duty))
-    
-    if direction == "forward":     
+
+    if direction == "forward":
         PWM.setMotorModel(duty,duty,duty,duty)       #Send car forward
         time.sleep(weight*default.WEIGHTBASEUNIT)
         PWM.setMotorModel(0,0,0,0)                   #Stop car
-       
+
     if direction == "backward":
         PWM.setMotorModel(-duty,-duty,-duty,-duty)   #Send car backward
-        BUZZER.run(1)
-        time.sleep(weight*default.WEIGHTBASEUNIT)
-        BUZZER.run(0)
+        buzzer.beep(weight)                          #If don't want car to beep, comment this line out and use the line below
+        #time.sleep(weight*default.WEIGHTBASEUNIT)
         PWM.setMotorModel(0,0,0,0)                   #Stop car
 
     return (req_data) # echo request data
 
 def get_ip():
-    s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        s.connect(('10.255.255.255',1))
-        IP=s.getsockname()[0]
+        s.connect(("10.255.255.255",1))
+        IP = s.getsockname()[0]
     except Exception:
-        IP='127.0.0.1'
+        IP = "127.0.0.1"
     finally:
         s.close()
     return IP
 
 def main():
-    hostip=get_ip()
+    hostip = get_ip()
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s',dest='server_ip',type=str,default=hostip,help='REST server IP address, default=localhost')
+    parser.add_argument('-s',dest='server_ip',type=str,default=hostip,help='REST server IP address, default=current IP')
     parser.add_argument('-p',dest='port',type=int,default=8888,help='port number in request url, default=8888')
     parser.add_argument('-d',dest='debug',type=bool,default=False,help='debug flag, default=False')
     parser.add_argument('-u',dest='unit',type=float,default=0.5,help='weight base unit, default=0.5')
     args = parser.parse_args()
-    
+
     host = args.server_ip
     port = args.port
     default.DEBUG=args.debug
     default.WEIGHTBASEUNIT=args.unit
-    
+
     #Start server
     try:
         run("car:app",host=host,port=port)
@@ -217,4 +219,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-    
+

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 const StyledFooter = styled.div`
     bottom: 0;
-    padding: 0.25em;
+    padding: 0;
     color: black;
     display: grid;
     place-content: center;

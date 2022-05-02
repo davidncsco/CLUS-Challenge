@@ -70,6 +70,7 @@ const Registration = () => {
     // Fetch questions from DB
     const [questions,setQuestions] = useState('')
     useEffect(() => {
+        console.log('Calling useEffect to fetch questions')
         const url = `${process.env.REACT_APP_API_URL}/questions`
         console.log(url)
         axios.get(url)
@@ -81,6 +82,7 @@ const Registration = () => {
 
     // Wait for response from the (promise) POST before navigate to the new page
     useEffect( () => {
+        console.log('Calling useEffect...')
         if( userid !== '' && car === '' ) {
             const url = `${process.env.REACT_APP_API_URL}/start?userid=${userid}`
             console.log(url)

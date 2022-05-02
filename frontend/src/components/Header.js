@@ -7,12 +7,12 @@ import { AppBar, Toolbar, Box, makeStyles } from '@material-ui/core';
 
 const useStyles = makeStyles({
     logo: {
-      width: 160,
-      height: 45
+      width: 150,
+      height: 40
     },
     dash: {
-        width: 200,
-        height: 40
+        width: 150,
+        height: 35
     }
   });
 
@@ -26,7 +26,7 @@ const Header = () => {
                     <img className={classes.logo} src={ciscoLive} />
                 </Box>
                 <Box p={1} flexGrow={2} alignSelf="center">
-                    <img className={classes.dash} src={devDash} />
+                    <img className={classes.dash} src={devDash}/>
                 </Box>
                 <Box p={1} flexGrow={0} alignSelf="flex-end">
                     <img className={classes.logo} src={allIn} />

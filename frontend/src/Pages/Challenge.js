@@ -31,8 +31,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const StyledImage = styled.img`
-    width: 960px;
-    height: 540px;
+    width: 1200px;
+    height: 650px;
     object-fit: full-width;
 `;
 
@@ -66,13 +66,13 @@ const Challenge = () => {
     }
 
     function sendCommandToCar(car,distance) {
-      console.log('Send AXIOS command to car for user',userid,'with distance',distance)
-      const url = `${process.env.REACT_APP_API_URL}/score?user_id=${userid}&weight=${distance}`
+      console.log('Send AXIOS command to car for user',car.number,'with distance',distance)
+      const url = `${process.env.REACT_APP_API_URL}/score?carid=${car.number}&weight=${distance}`
       console.log(url)
       axios.put(url)
       .then(response => {
           console.log(response.data)
-          saveCarPositionInLocalStorage(distance)
+          //saveCarPositionInLocalStorage(distance)
       })
       .catch( error => {
           console.log(error.response)
@@ -83,7 +83,7 @@ const Challenge = () => {
     function recordUserTime() {
       console.log('Send AXIOS command to record user time')
       // End of challenge - Record user time in DB for leader board display
-      let url = `${process.env.REACT_APP_API_URL}/end?userid=${userid}`
+      let url = `${process.env.REACT_APP_API_URL}/end?userid=${userid}&carid=${car.number}`
       console.log(url)
       axios.put(url)
       .then(response => {
@@ -98,12 +98,6 @@ const Challenge = () => {
     useEffect( () => {
       console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
       if( answer !== undefined ) {    // answer is right or wrong
-        if(qindex <= questions.length) {
-            // Compute distance to go back/forth for the car
-            let weight = ( questions[qindex-1].weight === null ) ? 1 : questions[qindex-1].weight
-            let distance = (answer ? 1: -1) * weight
-            sendCommandToCar(car,distance)
-        }
         setOpenDialog(true)
         if( answer && qindex === questions.length) {
             setEndOfChallenge(true)
@@ -111,6 +105,16 @@ const Challenge = () => {
         }
       }
     }, [answer,qindex]);
+
+    useEffect( () => {
+      console.log('Enter useEffect for openDialog',openDialog,answer)
+      if( (answer != undefined) && (qindex < questions.length) ) {
+          // Compute distance to go back/forth for the car
+          let weight = ( questions[qindex-1].weight === null ) ? 1 : questions[qindex-1].weight
+          let distance = (answer ? 1: -1) * weight
+          sendCommandToCar(car,distance)
+      }
+    }, [openDialog])
 
     function handleOnEndOfGame() {
       navigate("/",{state:{}})
@@ -138,15 +142,15 @@ const Challenge = () => {
 
     return (
         <Container>
-            <Typography color="textSecondary" variant="h6">
-            Welcome {firstname} to DevRel500 challenge - You've been assigned to "{car.color}"" car
+            <Typography color="info.main" justify="center" variant="h6">
+              Welcome {firstname} to DevRel500 challenge - You've been assigned to "{car.color}"" car
             </Typography>
             <Container >
                 <StyledImage src={`${process.env.REACT_APP_API_URL}/static/${question.filename}`} alt="" id="img" className="img" />
             </Container>
             <Container className={classes.margin}>
-                <Typography color="textSecondary" variant="h6">
-                Please select your answer
+                <Typography sx={{ justifyContent: 'flex-start' }} color="textSecondary" variant="h6">
+                    Please select your answer
                 </Typography>
                 {question.choices.map((choice) => (
                     <AnimatedChoiceButtons id={choice} variant="contained" key={choice} onClick={() => handleOnclick(choice)}>

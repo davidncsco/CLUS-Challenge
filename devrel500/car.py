@@ -27,11 +27,11 @@ class Buzzer:
             time.sleep(default.WEIGHTBASEUNIT*0.5)
             count=count+1
 
-
-
+    
+   
 buzzer=Buzzer()
 
-
+            
 ############### car control #################
 class Motor:
     def __init__(self):
@@ -41,24 +41,24 @@ class Motor:
         if duty1>4095:
             duty1=4095
         elif duty1<-4095:
-            duty1=-4095
-
+            duty1=-4095        
+        
         if duty2>4095:
             duty2=4095
         elif duty2<-4095:
             duty2=-4095
-
+            
         if duty3>4095:
             duty3=4095
         elif duty3<-4095:
             duty3=-4095
-
+            
         if duty4>4095:
             duty4=4095
         elif duty4<-4095:
             duty4=-4095
         return duty1,duty2,duty3,duty4
-
+        
     def left_Upper_Wheel(self,duty):
         if duty>0:
             self.pwm.setMotorPwm(0,0)
@@ -99,29 +99,29 @@ class Motor:
         else:
             self.pwm.setMotorPwm(4,4095)
             self.pwm.setMotorPwm(5,4095)
-
-
+            
+ 
     def setMotorModel(self,duty1,duty2,duty3,duty4):
         duty1,duty2,duty3,duty4=self.duty_range(duty1,duty2,duty3,duty4)
         self.left_Upper_Wheel(-duty1)
         self.left_Lower_Wheel(-duty2)
         self.right_Upper_Wheel(-duty3)
         self.right_Lower_Wheel(-duty4)
-
+            
 
 #for the loop
 #PWM.setMotorModel(2000,2000,2000,2000)       #Forward
 #PWM.setMotorModel(-2000,-2000,-2000,-2000)   #Back
-#PWM.setMotorModel(-500,-500,2000,2000)       #Left
-#PWM.setMotorModel(2000,2000,-500,-500)       #Right
+#PWM.setMotorModel(-500,-500,2000,2000)       #Left 
+#PWM.setMotorModel(2000,2000,-500,-500)       #Right    
 #time.sleep(3)
 #PWM.setMotorModel(0,0,0,0)                   #Stop
-
+    
 ################################ DO NOT MODIFY THE CODE ABOVE #################################
 
 
 """ REST API server, taking instruction from API request """
-PWM=Motor()
+PWM=Motor()   
 
 # for quick debuging
 def dprint(*objects):
@@ -151,7 +151,7 @@ async def parse_request(request: Request,wheel: default.Wheel):
         weight = req_data["weight"]
         if weight < default.WEIGHTMIN or weight > default.WEIGHTMAX:
             dprint ("\nweight is not in the range, set to default")
-            weight = default.WEIGHTMIN # set to default
+            weight = default.WEIGHTMIN # set to default 
     else:
         weight = default.WEIGHTMIN   # set to default
         dprint ("\nweight not found, set to default")
@@ -167,20 +167,20 @@ async def parse_request(request: Request,wheel: default.Wheel):
         duty = req_data["speed"]
         if duty < default.SPEEDMIN or duty > default.SPEEDMAX:
             dprint ("\nspeed is not in the range, set to default")
-            duty = default.SPEED # set to default
+            duty = default.SPEED # set to default 
     else:
          duty = default.SPEED
          dprint ("\nspeed not found, set to default")
     dprint ("\nData send to car,weight=%d,direction=%s,speed=%d\n"%(weight,direction,duty))
-
-    if direction == "forward":
+    
+    if direction == "forward":        
         PWM.setMotorModel(duty,duty,duty,duty)       #Send car forward
         time.sleep(weight*default.WEIGHTBASEUNIT)
         PWM.setMotorModel(0,0,0,0)                   #Stop car
-
+       
     if direction == "backward":
         PWM.setMotorModel(-duty,-duty,-duty,-duty)   #Send car backward
-        buzzer.beep(weight)                          #If don't want car to beep, comment this line out and use the line below
+        buzzer.beep(weight)
         #time.sleep(weight*default.WEIGHTBASEUNIT)
         PWM.setMotorModel(0,0,0,0)                   #Stop car
 
@@ -205,12 +205,12 @@ def main():
     parser.add_argument('-d',dest='debug',type=bool,default=False,help='debug flag, default=False')
     parser.add_argument('-u',dest='unit',type=float,default=0.5,help='weight base unit, default=0.5')
     args = parser.parse_args()
-
+    
     host = args.server_ip
     port = args.port
     default.DEBUG=args.debug
     default.WEIGHTBASEUNIT=args.unit
-
+    
     #Start server
     try:
         run("car:app",host=host,port=port)
@@ -219,4 +219,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
+    

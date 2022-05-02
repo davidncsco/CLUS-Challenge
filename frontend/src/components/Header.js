@@ -23,13 +23,13 @@ const Header = () => {
         <AppBar position="static" color="primary">
             <Toolbar display="flex" p={1}>
                 <Box p={1} flexGrow={2} alignSelf="flex-start">
-                    <img className={classes.logo} src={ciscoLive} />
+                    <img className={classes.logo} alt="CiscoLive" src={ciscoLive} />
                 </Box>
                 <Box p={1} flexGrow={2} alignSelf="center">
-                    <img className={classes.dash} src={devDash}/>
+                    <img className={classes.dash} alt="DevDash" src={devDash}/>
                 </Box>
                 <Box p={1} flexGrow={0} alignSelf="flex-end">
-                    <img className={classes.logo} src={allIn} />
+                    <img className={classes.logo} alt="AllIn" src={allIn} />
                 </Box>
             </Toolbar>
         </AppBar>

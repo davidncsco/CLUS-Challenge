@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import axios from 'axios';
 import AnimatedChoiceButtons from '../components/styles/Button.styled'
 import StopWatch from '../components/StopWatch'
+import useSound from 'use-sound'
+import fanFare from '../Assets/fanfare.mp3'
 
 // More Material UI examples
 // https://react.school/material-ui/templates
@@ -46,6 +48,7 @@ const Challenge = () => {
     const [openDialog,setOpenDialog] = useState(false)
     const [endofChallenge,setEndOfChallenge] = useState(false)
     const [wrongs, setWrongs] = useState(0)
+    const [play] = useSound(fanFare);
 
     // Information passing from registration page
     let location = useLocation()
@@ -102,13 +105,14 @@ const Challenge = () => {
         if( answer && qindex === questions.length) {
             setEndOfChallenge(true)
             recordUserTime()
+            play()
         }
       }
     }, [answer,qindex]);
 
     useEffect( () => {
       console.log('Enter useEffect for openDialog',openDialog,answer)
-      if( (answer != undefined) && (qindex < questions.length) ) {
+      if( (answer !== undefined) && (qindex < questions.length) ) {
           // Compute distance to go back/forth for the car
           let weight = ( questions[qindex-1].weight === null ) ? 1 : questions[qindex-1].weight
           let distance = (answer ? 1: -1) * weight
@@ -142,14 +146,14 @@ const Challenge = () => {
 
     return (
         <Container>
-            <Typography color="info.main" justify="center" variant="h6">
+            <Typography color="textSecondary" variant="h6">
               Welcome {firstname} to DevRel500 challenge - You've been assigned to "{car.color}"" car
             </Typography>
             <Container >
                 <StyledImage src={`${process.env.REACT_APP_API_URL}/static/${question.filename}`} alt="" id="img" className="img" />
             </Container>
             <Container className={classes.margin}>
-                <Typography sx={{ justifyContent: 'flex-start' }} color="textSecondary" variant="h6">
+                <Typography variant="h6">
                     Please select your answer
                 </Typography>
                 {question.choices.map((choice) => (
@@ -175,16 +179,17 @@ const Challenge = () => {
                 )}
                 {openDialog && endofChallenge && (
                   <Dialog open={openDialog}>
-                    <DialogTitle>Congratulations</DialogTitle>
+                    <DialogTitle>!!! CONGRATULATIONS !!!</DialogTitle>
                     <DialogContent>
                       <DialogContentText>
                         You have completed the DevRel500 challenge with {questions.length} questions and
-                        you answered {wrongs} time(s) incorrectly. Please check the leader board for your standing.
+                        you answered {wrongs} time(s) incorrectly. Check the leaderboard for your standing.
+                        Please click on the trumpet to end the game!
                       </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                      <Button onClick={handleOnEndOfGame} color="primary" autoFocus>
-                        Close
+                      <Button onClick={handleOnEndOfGame} color="primary" autoFocus>                                                      
+                            🎺
                       </Button>
                     </DialogActions>
                   </Dialog>

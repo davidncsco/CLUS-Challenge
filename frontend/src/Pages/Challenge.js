@@ -188,9 +188,11 @@ const Challenge = () => {
                       </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                      <Button onClick={handleOnEndOfGame} color="primary" autoFocus>                                                      
-                            🎺
-                      </Button>
+                      <button onClick={handleOnEndOfGame} color="lightblue" autoFocus>
+                        <span role="img" aria-label="trumpet">
+                          🎺
+                        </span>                                                  
+                      </button>
                     </DialogActions>
                   </Dialog>
                 )}

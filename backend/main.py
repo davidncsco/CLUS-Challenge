@@ -4,7 +4,7 @@ from fastapi import status as statuscode
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from model import DemoQuestion, User, Car
-import re, httpx, json, socket, asyncio
+import httpx, json
 import pandas as pd
 from utils import load_db
 
@@ -16,10 +16,10 @@ from database import (
     fetch_user_by_id,
     start_the_challenge,
     fetch_all_cars,
-    end_the_challenge,
     fetch_leaderboard_users,
     get_car_payload,
-    send_car_to_start_position,
+    reset_car_in_db,
+    update_user_time,
 )
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -88,72 +88,52 @@ async def start_challenge(userid: str):
         return response
     raise HTTPException(404, f"Can't signal start of challenge for user {userid}")
 
+async def send_command_to_car( url: str, payload: str ):
+    if( environment_vars['car_simulation'] or payload is None ):
+        return 200
+    print(f'Send cmd to car {url} with payload {payload}')
+    data = json.loads(payload)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url,json=data) 
+        print('Sending POST cmd to car with response status code = ',response.status_code)
+        if response:
+            return response.status_code
+        else:
+            raise HTTPException(404, f"Can't send command to car with {url}")
+            return 404
+    return 200
+
 @app.put("/end",
          description="Signal end of the challenge and cleanup routine")
-async def end_challenge(userid: str):
-    response = await end_the_challenge(userid)
-    if response:
-        current_position = response['position']
-        car_id = response['number']
-        print('end_challenge: current position=',current_position,' car# ',car_id)
-        if( current_position > 0):
-            weight = -1 * current_position
-            (car_url,payload) = await get_car_payload('',car_id,weight)
-            if ((payload is not None) and not environment_vars['car_simulation']):
-                print(f'Send cmd to car {car_url} with payload {payload}')
-                data = json.loads(payload)
-                async with httpx.AsyncClient() as client:
-                    resp = await client.post(car_url,json=data)
-                    if resp:
-                        print('Sending POST to car with status code = ',resp.status_code)
-                        return resp.status_code
-                    else:
-                        raise HTTPException(404, f"Can't send command to reset to starting position for user {userid}")
-        return 200
+async def end_challenge(userid: str, carid: int):
+    print('end_challenge: userid=',userid,' car#',carid)
+    current_position = await update_user_time(userid,carid)
+    if current_position > 0:
+        (url,payload) =  await get_car_payload( carid, current_position*-1 )
+        await reset_car_in_db(carid)
+        return await send_command_to_car( url, payload )
     
     raise HTTPException(404, f"Can't signal end of challenge for user {userid}")
     return 404
 
 @app.put("/score",
         description="Actions taken after user answer a question correctly or incorrectly")
-async def score_a_question(user_id: str, weight: int):
+async def score_a_question(carid: int, weight: int):
     ''' If user answers the question correctly, send weight as positive number
         otherwise, send weight as negative number.
     ''' 
-    (car_url,payload) = await get_car_payload(user_id,0,weight)
-    if ((payload is not None) and not environment_vars['car_simulation']):
-        print(f'Send cmd to car {car_url} with payload {payload}')
-        data = json.loads(payload)
-        async with httpx.AsyncClient() as client:
-            response = await client.post(car_url,json=data) 
-            print('Sending POST to car with status code = ',response.status_code)
-            if response:
-                return response.status_code
-            else:
-                raise HTTPException(404, f"Can't send command to car for user {user_id}")
-    return 200
+    (url,payload) = await get_car_payload( carid,weight )
+    return await send_command_to_car( url,payload )
+
         
 @app.put("/reset/{carid}",
-        description="Reset car position and make it available for grab (if user quits mid-race)")
+        description="Reset car position by car number and make it available for grab (if user quits mid-race)")
 async def reset_car(carid: int):
-    current_position = await send_car_to_start_position(carid)
-    print('Current car position is ',current_position)
-    if current_position > 0:
-        weight = -1 * current_position
-        (car_url,payload) = await get_car_payload('',carid,weight)
-        if ((payload is not None) and not environment_vars['car_simulation']):
-            print(f'Send cmd to car {car_url} with payload {payload}')
-            data = json.loads(payload)
-            async with httpx.AsyncClient() as client:
-                response = await client.post(car_url,json=data)
-                print('Sending POST to car with status code = ',response.status_code)
-                if response:
-                    return response.status_code
-                else:
-                    raise HTTPException(404, f"Can't send command to reset car#{carid} to starting position")
-                    return 404
-        return 204
-    return 200
+    current_position = await reset_car_in_db(carid)
+    weight = current_position * -1
+    (url,payload) =  await get_car_payload( carid, weight )
+    return await send_command_to_car( url, payload )
+
 
 @app.put("/loaddb",
           description="Initialize question and car collections in the DB")

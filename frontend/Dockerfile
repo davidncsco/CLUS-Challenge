@@ -1,22 +1,19 @@
 # pull official base image
-FROM node:17.8.0-alpine
-
-# set working directory
+FROM node:17.8.0-alpine as build-frontend
 WORKDIR /app
-
-# add `/app/node_modules/.bin` to $PATH
 ENV PATH /app/node_modules/.bin:$PATH
+ENV REACT_APP_API_URL http://sjds-kworker-a-1:8000
+COPY package.json .
 
-# install app dependencies
-COPY package.json ./
-COPY .env.development ./
+#COPY .env.development ./
 RUN npm install --silent
-RUN npm install react-scripts@5.0.0 -g --silent
 
-# add app
-COPY . ./
+COPY ./ /app/
 
-EXPOSE 3000
+#RUN npm install react-scripts@5.0.0 -g --silent
+RUN npm run build
 
-# start app
-CMD ["yarn", "start"]
+# Build for production with nginx
+FROM nginx:1.20.2-alpine
+
+COPY --from=build-frontend /app/build/ /usr/share/nginx/html

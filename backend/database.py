@@ -6,6 +6,7 @@ from utils import get_time, get_uuid, get_meta
 # Read environment variables from meta file
 meta = get_meta()
 environments_vars = meta['env'][0]
+cars_list = meta['cars']
 DB_CONNECT_URL              = environments_vars['database_url']
 DB_NAME                     = environments_vars['database_name']
 MAX_QUESTIONS_TO_GENERATE   = environments_vars['questions_to_generate']
@@ -90,48 +91,38 @@ async def start_the_challenge(userid: str):
         car = await collection.find_one({'number' : car['number']})
     return car
 
-async def update_user_time(userid: str, timetaken: int):
+async def update_user_time(userid: str, carid: int):
+    collection = database.car
+    filter = {'number': carid}
+    document = await collection.find_one(filter)
+    if not document:
+        return 0;
+    timetaken = get_time() - document['start']
+    current_position = document['position']
+    
     collection = database.user
     filter = {'_id': userid }
     document = collection.find(filter)
     if( document ):
+        print(f'update user time: {userid}, timetaken: {timetaken}')
         await collection.update_one(filter, {"$set": {"timetaken": timetaken}})
-        return 1
+        return current_position
     return 0
 
-async def end_the_challenge(userid: str):
+async def reset_car_in_db(carid: int) -> int:
     collection = database.car
-    filter = { 'userid': userid }
-    epoch = get_time()
-    # User has completed the challenge -> clear car data, record user time
-    document = await collection.find_one(filter)
-    if( document ):
-        timetaken = epoch - document['start']
-        car_number = document['number']
-        # Record time taken for user
-        await update_user_time(userid, timetaken)
-        # Clear car data, return car to available pool
-        [document.pop(key) for key in { "_id","userid", "start"}]
-        await collection.replace_one(filter,document)
-        document = await collection.find_one({'number': car_number})                                         
-    return document
-
-async def send_car_to_start_position(car_number: int) -> int:
-    collection = database.car
-    filter = { 'number': car_number }
+    filter = {'number': carid}
+    current_position = 0
     # Admin request to reset car record in DB and send it to starting position
     document = await collection.find_one(filter)
-    current_position = 0
-    if( document ):
+    if( document ):      
         current_position = document['position']
-        if( ("userid" in document) and (document['position'] > 0)):
-            print('Sending car to starting position')                                        
+        document['position'] = 0                    
         # remove _id and optional fields before replace
         for key in { '_id','userid', 'start' }:  
             if key in document:
                 document.pop(key)
-        await collection.replace_one(filter,document)
-        #document = await collection.find_one(filter)                                         
+        await collection.replace_one(filter,document)                                     
     return current_position
 
 async def fetch_leaderboard_users():
@@ -142,29 +133,42 @@ async def fetch_leaderboard_users():
         users.append(User(**document))
     return users
 
-# Car URL template
-
-
-async def get_car_payload(user_id: str,car_id: int,weight: int):
-    ''' Get car payload by user_id or car_id
-    '''
+async def get_car_position( carid: int ):
     collection = database.car
-    filter = {'number':car_id} if (car_id != 0) else {'userid':user_id}
-    print(f'filter {filter} weight {weight}')
-    car_url = None
-    payload = None
+    filter = {'number': carid}
     document = await collection.find_one(filter)
-    if document:
-        car_url = CAR_URL_TEMPLATE % document['ip']
-        direction = 'forward' if (weight > 0) else 'backward'
-        if( weight+document['position'] < 0 ):
-            weight += document['position']
-        if( (document['position'] == 0) and (weight < 0) ):
-            payload= None
-        else:
-            payload = '{"speed": %s,"weight": %s, "direction": "%s"}' % (document['speed'], abs(weight), direction)
-            new_position = document['position'] + weight
-            await collection.update_one(filter, {"$set": {"position": new_position}})
+    if( document ):
+        return document['position']
+    return 0
 
-    return (car_url,payload)
+async def set_car_position( carid: int, position: int ):
+    collection = database.car
+    filter = {'number': carid}
+    document = await collection.find_one(filter)
+    if( document ):
+        await collection.update_one(filter, {"$set": {"position": position}})
+        return 1
+    return 0
+    
+async def get_car_payload(carid: int,weight: int):
+    ''' Get car payload by car id (car number) and set current car position
+        base on the value of weight and current car position
+    '''
+    car = cars_list[carid-1]   # current car
+    current_position = await get_car_position(carid)
+    print(f'Getting payload, car #{carid}, current position={current_position}, weight={weight}')
+    new_position     = current_position + weight
+    if( new_position < 0 and weight < 0 ):
+        weight = current_position * -1
+        new_position = 0
+    await set_car_position(carid, new_position)
+    if weight != 0:
+        car_url = CAR_URL_TEMPLATE % car['ip']
+        direction = 'forward' if (weight > 0) else 'backward'
+        payload = '{"speed": %s,"weight": %s, "direction": "%s"}' % (car['speed'], abs(weight), direction)
+        car['position'] = new_position
+        print(f'car #{carid}, new position {new_position}')
+        return (car_url,payload)
+    else:
+        return( None, None)
         

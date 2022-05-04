@@ -12,6 +12,7 @@ DB_NAME                     = environments_vars['database_name']
 MAX_QUESTIONS_TO_GENERATE   = environments_vars['questions_to_generate']
 CAR_SIMULATION              = environments_vars['car_simulation']
 CAR_URL_TEMPLATE            = environments_vars['car_url_template']
+CAR_BACKWARD_FACTOR         = environments_vars['car_backward_factor']
 
 try:
     print('Connecting to MongoDB...')
@@ -94,16 +95,15 @@ async def start_the_challenge(userid: str):
 async def update_user_time(userid: str, carid: int):
     collection = database.car
     filter = {'number': carid}
-    document = await collection.find_one(filter)
-    if not document:
-        return 0;
-    timetaken = get_time() - document['start']
-    current_position = document['position']
-    
+    car = await collection.find_one(filter)
+    if car and 'start' in car:
+        timetaken = get_time() - car['start']
+        current_position = car['position']
+    print(f'Time taken for user {userid} is {timetaken} secs')
     collection = database.user
     filter = {'_id': userid }
-    document = collection.find(filter)
-    if( document ):
+    user = collection.find(filter)
+    if( user ):
         print(f'update user time: {userid}, timetaken: {timetaken}')
         await collection.update_one(filter, {"$set": {"timetaken": timetaken}})
         return current_position
@@ -165,7 +165,7 @@ async def get_car_payload(carid: int,weight: int):
     if weight != 0:
         car_url = CAR_URL_TEMPLATE % car['ip']
         direction = 'forward' if (weight > 0) else 'backward'
-        payload = '{"speed": %s,"weight": %s, "direction": "%s"}' % (car['speed'], abs(weight), direction)
+        payload = '{"speed": %s,"weight": %s, "direction": "%s"}' % (car['speed'], abs(weight)*CAR_BACKWARD_FACTOR, direction)
         car['position'] = new_position
         print(f'car #{carid}, new position {new_position}')
         return (car_url,payload)

@@ -2,7 +2,7 @@
 FROM node:17.8.0-alpine as build-frontend
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
-ENV REACT_APP_API_URL http://sjds-kworker-a-1:8000
+ENV REACT_APP_API_URL http://devrel-500
 COPY package.json .
 
 #COPY .env.development ./

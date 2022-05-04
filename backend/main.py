@@ -109,7 +109,7 @@ async def end_challenge(userid: str, carid: int):
     print('end_challenge: userid=',userid,' car#',carid)
     current_position = await update_user_time(userid,carid)
     if current_position > 0:
-        (url,payload) =  await get_car_payload( carid, current_position*-1 )
+        (url,payload) =  await get_car_payload( carid, current_position * -1 )
         await reset_car_in_db(carid)
         return await send_command_to_car( url, payload )
     

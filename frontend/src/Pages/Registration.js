@@ -3,8 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { faCheck, faTimes, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate } from 'react-router-dom';
-import { useStateIfMounted } from "use-state-if-mounted";
-import axios from 'axios';
+import ky from 'ky';
 import './Registration.css';
 import styled from 'styled-components';
 
@@ -44,8 +43,8 @@ const Registration = () => {
 
     const [errMsg, setErrMsg] = useState('');
 
-    const [userid,setUserId] = useStateIfMounted('');
-    const [car,setCar] = useStateIfMounted('');
+    const [userid,setUserId] = useState('');
+    const [car,setCar] = useState('');
 
     useEffect(() => {
         userRef.current.focus();
@@ -69,35 +68,42 @@ const Registration = () => {
 
     // Fetch questions from DB
     const [questions,setQuestions] = useState('')
+
     useEffect(() => {
         console.log('Calling useEffect to fetch questions')
         const url = `${process.env.REACT_APP_API_URL}/questions`
         console.log(url)
-        axios.get(url)
-        .then (response => {
-            console.log('fetched questions =',response.data.length)
-            setQuestions(response.data)
-        })
+        async function fetchUrl(url) {
+            try {
+               const json = await ky.get(url).json()
+               console.log( json )
+               console.log('questions fetched=',json.length)
+               setQuestions(json)
+            } catch( error ) {
+                alert( `Can't fetch questions from database ${error}`)
+            }
+        }
+        fetchUrl(url)
     }, []);
 
     // Wait for response from the (promise) POST before navigate to the new page
     useEffect( () => {
-        console.log('Calling useEffect...')
+        console.log('Calling useEffect to start challenge...')
         if( userid !== '' && car === '' ) {
             const url = `${process.env.REACT_APP_API_URL}/start?userid=${userid}`
             console.log(url)
-            axios.put(url)
-            .then(response => {
-                console.log(response.data)
-                setCar(response.data)
-            })
-            .catch( error => {
-                console.log(error.response)
-                alert('Cannot assign car to user',userid)
-            })
+            async function fetchUrl(url) {
+                try {
+                    const json = await ky.put(url).json()
+                    console.log(json)
+                    setCar(json)
+                } catch( error ) {
+                    alert( `Can't assign car to user to start challenge ${error}`)
+                }
+            }
+            fetchUrl(url)
         } else if( car !== '' ) {
             console.log('userid',userid)
-            {questions.map((question) => question.filename )}
             navigate("/challenge",{state:{first:firstname,userid:userid,car:car,questions:questions}})
             setFirstname('')
             setLastname('')
@@ -115,26 +121,23 @@ const Registration = () => {
             setErrMsg("Invalid Entry");
             return;
         }
-        try {
-            const user = { 
-                "email": email,
-                "first": firstname,
-                "last": lastname
-            }
-            const url = `${process.env.REACT_APP_API_URL}/user`
-            console.log(url)
-            axios.post(url, user)
-            .then(response => {
-                console.log(response.data)
-                setUserId(response.data.id)
-            })
-            .catch( error => {
-                console.log(error.response)
-                alert('Cannot register user, user may have already taken the challenge',)
-            })
-        } catch (err) {
-            setErrMsg('Registration Failed')
+
+        const user = { 
+            "email": email,
+            "first": firstname,
+            "last": lastname
         }
+        const url = `${process.env.REACT_APP_API_URL}/user`
+        console.log(url)
+        console.log(user)
+        try {
+            const json = await ky.post(url,{json: user}).json()
+            console.log(json.id)
+            setUserId(json.id)
+        } catch (error) {
+            alert( `can't register user to database ${error}`)
+        }
+
         errRef.current.focus();
     }
 

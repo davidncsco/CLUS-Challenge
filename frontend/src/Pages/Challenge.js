@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from 'axios';
+import ky from 'ky';
 import AnimatedChoiceButtons from '../components/styles/Button.styled'
 import StopWatch from '../components/StopWatch'
 import useSound from 'use-sound'
@@ -68,34 +68,28 @@ const Challenge = () => {
       localStorage.setItem("car",JSON.stringify(car_position))
     }
 
-    function sendCommandToCar(car,distance) {
-      console.log('Send AXIOS command to car for user',car.number,'with distance',distance)
+    async function sendCommandToCar(car,distance) {
+      console.log('Send KY command to car for user',car.number,'with distance',distance)
       const url = `${process.env.REACT_APP_API_URL}/score?carid=${car.number}&weight=${distance}`
       console.log(url)
-      axios.put(url)
-      .then(response => {
-          console.log(response.data)
-          //saveCarPositionInLocalStorage(distance)
-      })
-      .catch( error => {
-          console.log(error.response)
-          alert('Cannot send axios command to car for user:',car.userid)
-      })
+      try {
+        const json = await ky.put(url)
+        console.log( json )
+      } catch(error) {
+        alert(`Can't send command to car ${car.number} error=${error}, please notify admin`)
+      }
     }
 
-    function recordUserTime() {
-      console.log('Send AXIOS command to record user time')
-      // End of challenge - Record user time in DB for leader board display
-      let url = `${process.env.REACT_APP_API_URL}/end?userid=${userid}&carid=${car.number}`
+    async function recordUserTime() {
+      console.log('Send KY command to record user time')
+      const url = `${process.env.REACT_APP_API_URL}/end?userid=${userid}&carid=${car.number}`
       console.log(url)
-      axios.put(url)
-      .then(response => {
-          saveCarPositionInLocalStorage(-1 * car.position)
-      })
-      .catch( error => {
-          console.log(error.response)
-          alert('Cannot record time of challenge completion for user with id=',userid)
-      })
+      try {
+        const json = await ky.put(url)
+        console.log( json )
+      } catch(error) {
+        alert(`Can't record user time in database ${error}, please notify admin`)
+      }
     }
 
     useEffect( () => {
@@ -179,7 +173,7 @@ const Challenge = () => {
                 )}
                 {openDialog && endofChallenge && (
                   <Dialog open={openDialog}>
-                    <DialogTitle>!!! CONGRATULATIONS !!!</DialogTitle>
+                    <DialogTitle><span style={{color: 'red'}}>!!! CONGRATULATIONS !!!</span></DialogTitle>
                     <DialogContent>
                       <DialogContentText>
                         You have completed the DevRel500 challenge with {questions.length} questions and

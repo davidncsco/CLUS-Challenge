@@ -107,11 +107,12 @@
         {  "number": 3, "ip" : "10.20.0.13", "color": "Yellow","speed": 500, "position": 0 }
     ],
     "env": [
-        { "questions_to_generate": 10,
-          "car_simulation": 1,
-          "database_url": "mongodb://devnet:ciscopsdt@10.194.239.243:27017",
+        { "questions_to_generate": 20,
+          "car_simulation": 0,
+          "database_url": "mongodb://davidn:ciscopsdt@10.0.0.54:27017/",
           "database_name": "devrel500",
-          "car_url_template": "http://%s:8888/chittybang"
+          "car_url_template": "http://%s:8888/chittybang",
+          "car_backward_factor": 0.75
         }
     ]
 }

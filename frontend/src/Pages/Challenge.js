@@ -38,6 +38,7 @@ const StyledImage = styled.img`
     object-fit: full-width;
 `;
 
+const FINISH_LINE = 5
 
 const Challenge = () => {
     const classes = useStyles();
@@ -49,6 +50,7 @@ const Challenge = () => {
     const [endofChallenge,setEndOfChallenge] = useState(false)
     const [wrongs, setWrongs] = useState(0)
     const [play] = useSound(fanFare);
+    const [carPosition,setCarPosition] = useState(0)
 
     // Information passing from registration page
     let location = useLocation()
@@ -63,9 +65,9 @@ const Challenge = () => {
       console.log('Save car positon to localStorage, distance=',distance)
       // If new position negative then reset it to 0
       car.position = ((car.position+distance) >= 0)? car.position+distance : 0
-      let car_position = {"number": car.number, "position": car.position}
-      console.log('new car position=',car_position)
-      localStorage.setItem("car",JSON.stringify(car_position))
+      console.log('Current car position',car.position)
+      //let car_position = {"number": car.number, "position": car.position}
+      //localStorage.setItem("car",JSON.stringify(car_position))
     }
 
     async function sendCommandToCar(car,distance) {
@@ -78,6 +80,7 @@ const Challenge = () => {
       } catch(error) {
         alert(`Can't send command to car ${car.number} error=${error}, please notify admin`)
       }
+      saveCarPositionInLocalStorage(distance)
     }
 
     async function recordUserTime() {
@@ -96,10 +99,9 @@ const Challenge = () => {
       console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
       if( answer !== undefined ) {    // answer is right or wrong
         setOpenDialog(true)
-        if( answer && qindex === questions.length) {
-            setEndOfChallenge(true)
-            recordUserTime()
-            play()
+        console.log('Current car position',car.position)
+        if( answer && qindex === questions.length ){
+          stopTheChallenge()
         }
       }
     }, [answer,qindex]);
@@ -113,6 +115,13 @@ const Challenge = () => {
           sendCommandToCar(car,distance)
       }
     }, [openDialog])
+
+    function stopTheChallenge() {
+      console.log('!!! End of Challenge')
+      setEndOfChallenge(true)
+      recordUserTime()
+      play()
+    }
 
     function handleOnEndOfGame() {
       navigate("/",{state:{}})
@@ -130,7 +139,10 @@ const Challenge = () => {
     function handleNextQuestion() {
       console.log('Enter handleNextQuestion...qindex:',qindex,'answer',answer)
       setOpenDialog(false)
-      if( answer && qindex < questions.length ) {
+      if( car.position === FINISH_LINE ) {
+          setOpenDialog(true)
+          stopTheChallenge()
+      } else if ( answer && qindex < questions.length ) {
           console.log('Index increment, set next question...')
           setNextQuestion(questions[qindex])
           setQIndex(qindex+1)
@@ -176,8 +188,7 @@ const Challenge = () => {
                     <DialogTitle><span style={{color: 'red'}}>!!! CONGRATULATIONS !!!</span></DialogTitle>
                     <DialogContent>
                       <DialogContentText>
-                        You have completed the DevRel500 challenge with {questions.length} questions and
-                        you answered {wrongs} time(s) incorrectly. Check the leaderboard for your standing.
+                        You have crossed the finish line. Among {qindex} questions, you answered {wrongs} time(s) incorrectly. Check the leaderboard for your standing.
                         Please click on the trumpet to end the game!
                       </DialogContentText>
                     </DialogContent>

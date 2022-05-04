@@ -7,4 +7,5 @@ module.exports = function(app) {
   app.use('/end',createProxyMiddleware({target: {url},changeOrigin: true,}));
   app.use('/score',createProxyMiddleware({target: {url},changeOrigin: true,}));
   app.use('/user',createProxyMiddleware({target: {url},changeOrigin: true,}));
+  app.use('/position',createProxyMiddleware({target: {url},changeOrigin: true,}));
 };

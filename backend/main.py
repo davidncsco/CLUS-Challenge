@@ -18,6 +18,7 @@ from database import (
     fetch_all_cars,
     fetch_leaderboard_users,
     get_car_payload,
+    get_car_position,
     reset_car_in_db,
     update_user_time,
 )
@@ -125,6 +126,10 @@ async def score_a_question(carid: int, weight: int):
     (url,payload) = await get_car_payload( carid,weight )
     return await send_command_to_car( url,payload )
 
+@app.get("/position/{carid}",
+         description="Get current car position from database")
+async def get_current_car_position(carid: int):
+    return await get_car_position(carid)
         
 @app.put("/reset/{carid}",
         description="Reset car position by car number and make it available for grab (if user quits mid-race)")

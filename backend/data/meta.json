@@ -112,8 +112,7 @@
           "database_url": "mongodb://davidn:ciscopsdt@10.0.0.54:27017/",
           "database_name": "devrel500",
           "car_url_template": "http://%s:8888/chittybang",
-          "car_backward_factor": 0.75,
-          "target_position": 20
+          "car_backward_factor": 0.75
         }
     ]
 }

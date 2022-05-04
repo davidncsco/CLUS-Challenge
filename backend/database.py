@@ -13,6 +13,7 @@ MAX_QUESTIONS_TO_GENERATE   = environments_vars['questions_to_generate']
 CAR_SIMULATION              = environments_vars['car_simulation']
 CAR_URL_TEMPLATE            = environments_vars['car_url_template']
 CAR_BACKWARD_FACTOR         = environments_vars['car_backward_factor']
+TARGET_POSITION             = environments_vars['target_position']
 
 try:
     print('Connecting to MongoDB...')
@@ -100,14 +101,16 @@ async def update_user_time(userid: str, carid: int):
         timetaken = get_time() - car['start']
         current_position = car['position']
     print(f'Time taken for user {userid} is {timetaken} secs')
-    collection = database.user
-    filter = {'_id': userid }
-    user = collection.find(filter)
-    if( user ):
-        print(f'update user time: {userid}, timetaken: {timetaken}')
-        await collection.update_one(filter, {"$set": {"timetaken": timetaken}})
-        return current_position
-    return 0
+    if( current_position >= TARGET_POSITION ):
+        print(f'User has reached target position {current_position} => eligible to get on leaderboard')
+        collection = database.user
+        filter = {'_id': userid }
+        user = collection.find(filter)
+        if( user ):
+            print(f'update user time: {userid}, timetaken: {timetaken}')
+            await collection.update_one(filter, {"$set": {"timetaken": timetaken}})
+            return current_position
+        return 0
 
 async def reset_car_in_db(carid: int) -> int:
     collection = database.car

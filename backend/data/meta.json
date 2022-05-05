@@ -107,7 +107,7 @@
         {  "number": 3, "ip" : "10.20.0.13", "color": "Yellow","speed": 500, "position": 0 }
     ],
     "env": [
-        { "questions_to_generate": 25,
+        { "questions_to_generate": 30,
           "car_simulation": 0,
           "database_url": "mongodb://davidn:ciscopsdt@10.0.0.54:27017/",
           "database_name": "devrel500",

@@ -112,10 +112,11 @@ async def end_challenge(userid: str, carid: int):
     if current_position > 0:
         (url,payload) =  await get_car_payload( carid, current_position * -1 )
         await reset_car_in_db(carid)
-        return await send_command_to_car( url, payload )
+        await send_command_to_car( url, payload )
+        return {'greeting': 'Have a nice day!'} 
     
-    raise HTTPException(404, f"Can't signal end of challenge for user {userid}")
-    return 404
+    #raise HTTPException(404, f"Can't signal end of challenge for user {userid}")
+    #return 404
 
 @app.put("/score",
         description="Actions taken after user answer a question correctly or incorrectly")

@@ -38,7 +38,7 @@ const StyledImage = styled.img`
     object-fit: full-width;
 `;
 
-const FINISH_LINE = 5
+const FINISH_LINE = 15
 
 const Challenge = () => {
     const classes = useStyles();
@@ -50,7 +50,6 @@ const Challenge = () => {
     const [endofChallenge,setEndOfChallenge] = useState(false)
     const [wrongs, setWrongs] = useState(0)
     const [play] = useSound(fanFare);
-    const [carPosition,setCarPosition] = useState(0)
 
     // Information passing from registration page
     let location = useLocation()

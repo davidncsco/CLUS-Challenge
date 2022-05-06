@@ -23,6 +23,7 @@ const Instructions = () => {
         <Typography variant="h4" color="textPrimary">
             This page is used to reset car in the database.
             Please do not use if challenge is in progress. Click on button will reset car and make it available for the next user.
+            Please make sure to move the car back to the starting position
         </Typography>
         <Grid container
             direction="row"

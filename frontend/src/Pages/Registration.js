@@ -179,7 +179,7 @@ const Registration = () => {
                 <input
                     type="text"
                     id="lastname"
-                    ref={userRef}
+                    //{userRef}
                     autoComplete="off"
                     onChange={(e) => setLastname(e.target.value)}
                     value={lastname}

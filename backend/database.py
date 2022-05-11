@@ -13,6 +13,7 @@ MAX_QUESTIONS_TO_GENERATE   = environments_vars['questions_to_generate']
 CAR_SIMULATION              = environments_vars['car_simulation']
 CAR_URL_TEMPLATE            = environments_vars['car_url_template']
 CAR_BACKWARD_FACTOR         = environments_vars['car_backward_factor']
+VIRTUAL_EVENT               = environments_vars['virtual_event']        # Sandbox virtual event, skip all cars operations and update
 
 try:
     print('Connecting to MongoDB...')
@@ -57,12 +58,12 @@ async def create_user(user):
     user_in_db = await collection.find_one({"email": user.email.lower()})
     if( user_in_db ):
         print(f'User with email={user.email} already exists in database')
-        print(type(user_in_db))
-        if( ('timetaken' in user_in_db) and (user_in_db['timetaken'] > 0) ):  # Don't allow user on leaderboard to retake the challenge
-            return {}
-        else:
+        if( 'timetaken' not in user_in_db ):  # User ind DB but had not finished or taken challenge
             print('User already registered but have not taken or completed challenge, permission to take challenge granted',user_in_db['_id'])
-            return { "id": user_in_db['_id'] }
+        else:
+            print('User already registered and had taken the challenge')
+            return {}
+        return { "id": user_in_db['_id'] }
     user_id = get_uuid()
     document = { "_id": user_id, "email": user.email.lower(), "first": user.first, "last": user.last }
     result = await collection.insert_one(document)
@@ -82,15 +83,28 @@ async def fetch_all_cars():
     return cars
     
 async def start_the_challenge(userid: str):
+    epoch = get_time()                 # record start time in car collection
     collection = database.car
     filter = { 'start': None }
-    epoch = get_time()
     car = await collection.find_one(filter) # Find first available
     if( car ):
         print(f'car #{car["number"]} is assigned to user:{userid}')
         await collection.update_one(filter, {"$set": {"userid": userid,"start": epoch,"position": 0}})
         car = await collection.find_one({'number' : car['number']})
     return car
+
+async def start_virtual_challenge(userid: str):
+    epoch = get_time()                 # record start time in car collection
+    collection = database.user
+    filter = { '_id': userid }
+    user = await collection.find_one(filter)
+    if( user and ('timetaken' not in user) ):
+        print(f'update user start time: {userid}, start: {epoch}')
+        await collection.update_one(filter, {"$set": {"start": epoch}})
+        user = await collection.find_one({'_id' : userid})
+    elif user:
+        print(f'user {userid} already taken the challenge') 
+    return user
 
 async def update_user_time(userid: str, carid: int):
     collection = database.car
@@ -108,6 +122,24 @@ async def update_user_time(userid: str, carid: int):
         await collection.update_one(filter, {"$set": {"timetaken": timetaken}})
         return current_position
     return 0
+
+async def update_virtual_user_time(userid: str):
+    epoch = get_time()
+    collection = database.user
+    filter = { '_id': userid }
+    user = await collection.find_one(filter)
+    if( user and 'start' in user ):
+        start = user['start']
+        if( start > 0 ):
+            print(f'update virtual user time: {userid}, start: {start}, end: {epoch}')
+            user['timetaken'] = epoch - start
+            # remove _id and optional fields before replace
+            for key in { '_id','start' }:  
+                if key in user:
+                    user.pop(key)
+            await collection.replace_one(filter,user)   
+            user = await collection.find_one({'_id' : userid})
+    return user
 
 async def reset_car_in_db(carid: int) -> int:
     collection = database.car

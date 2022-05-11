@@ -39,6 +39,8 @@ const StyledImage = styled.img`
 `;
 
 const FINISH_LINE = 15
+// Virtual Event env var for Sandbox Virtual Event
+const VIRTUAL_EVENT = `${process.env.REACT_APP_VIRTUAL_EVENT}`
 
 const Challenge = () => {
     const classes = useStyles();
@@ -49,48 +51,68 @@ const Challenge = () => {
     const [openDialog,setOpenDialog] = useState(false)
     const [endofChallenge,setEndOfChallenge] = useState(false)
     const [wrongs, setWrongs] = useState(0)
+    const [rights, setRights] = useState(0)
     const [play] = useSound(fanFare);
 
     // Information passing from registration page
     let location = useLocation()
-    const firstname = location.state.first
-    const userid    = location.state.userid
-    const car       = location.state.car
+    let firstname = undefined
+    let userid    = undefined
+    let greeting  = undefined
+    let car       = undefined
+    let user      = undefined
+    let current_position = 0
+    
+    if( VIRTUAL_EVENT === 'true' ) {
+      user = location.state.user
+      firstname = user.first
+      userid    = location.state.userid
+      greeting  = `Welcome to DevRel500 challenge ${firstname}`
+      console.log("Userid is ",userid)
+    } else {
+      car       = location.state.car
+      firstname = location.state.first
+      userid    = location.state.userid
+      greeting = `Welcome to DevRel500 challenge ${firstname} - You've been assigned to "${car.color}" car`
+    }
     const questions = location.state.questions
-
     const [question,setNextQuestion] = useState(questions[qindex-1]);
 
+    // This is used for displaying cars simulation on screen (i.e. need to complete CarRace component)
     function saveCarPositionInLocalStorage(distance) {
-      console.log('Save car positon to localStorage, distance=',distance)
-      // If new position negative then reset it to 0
-      car.position = ((car.position+distance) >= 0)? car.position+distance : 0
-      console.log('Current car position',car.position)
-      //let car_position = {"number": car.number, "position": car.position}
-      //localStorage.setItem("car",JSON.stringify(car_position))
+        console.log('Save car positon to localStorage, distance=',distance)
+        // If new position negative then reset it to 0
+        car.position = ((car.position+distance) >= 0)? car.position+distance : 0
+        console.log('Current car position',car.position)
+        //let car_position = {"number": car.number, "position": car.position}
+        //localStorage.setItem("car",JSON.stringify(car_position))
     }
 
     async function sendCommandToCar(car,distance) {
-      console.log('Send KY command to car for user',car.number,'with distance',distance)
-      const url = `${process.env.REACT_APP_API_URL}/score?carid=${car.number}&weight=${distance}`
-      console.log(url)
-      try {
-        const json = await ky.put(url)
-        console.log( json )
-      } catch(error) {
-        alert(`Can't send command to car ${car.number} error=${error}, please notify admin`)
+      if( VIRTUAL_EVENT !== 'true' ) {
+        console.log('Send KY command to car for user',car.number,'with distance',distance)
+        const url = `${process.env.REACT_APP_API_URL}/score?carid=${car.number}&weight=${distance}`
+        console.log(url)
+        try {
+          const json = await ky.put(url)
+          console.log( json )
+        } catch(error) {
+          alert(`Can't send command to car ${car.number} error=${error}, please notify admin`)
+        }
+        saveCarPositionInLocalStorage(distance)
       }
-      saveCarPositionInLocalStorage(distance)
     }
 
     async function recordUserTime() {
       console.log('Send KY command to record user time')
-      const url = `${process.env.REACT_APP_API_URL}/end?userid=${userid}&carid=${car.number}`
+      const route = (VIRTUAL_EVENT === 'true') ? `endvirtual?userid=${userid}` : `end?userid=${userid}&carid=${car.number}`
+      const url   = `${process.env.REACT_APP_API_URL}/${route}`
       console.log(url)
       try {
         const json = await ky.put(url)
         console.log( json )
       } catch(error) {
-        alert(`Can't record user time in database ${error}, please notify admin`)
+        alert(`Can't record user time in database for user ${userid} ${error}, please notify admin`)
       }
     }
 
@@ -98,7 +120,7 @@ const Challenge = () => {
       console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
       if( answer !== undefined ) {    // answer is right or wrong
         setOpenDialog(true)
-        console.log('Current car position',car.position)
+        console.log('Current position',rights - wrongs)
         if( answer && qindex === questions.length ){
           stopTheChallenge()
         }
@@ -109,8 +131,7 @@ const Challenge = () => {
       console.log('Enter useEffect for openDialog',openDialog,answer)
       if( (answer !== undefined) && (qindex < questions.length) ) {
           // Compute distance to go back/forth for the car
-          let weight = ( questions[qindex-1].weight === null ) ? 1 : questions[qindex-1].weight
-          let distance = (answer ? 1: -1) * weight
+          let distance = (answer ? 1: -1)
           sendCommandToCar(car,distance)
       }
     }, [openDialog])
@@ -131,6 +152,7 @@ const Challenge = () => {
         let result = question.answer.includes(choice)
         setDialogTitle(result ? 'That is correct!' : 'Incorrect!!!')
         setWrongs(result ? wrongs : wrongs+1 )
+        setRights(result ? rights+1 : rights )
         setOpenDialog(true)
         setYourAnswer(result)
     }
@@ -138,7 +160,7 @@ const Challenge = () => {
     function handleNextQuestion() {
       console.log('Enter handleNextQuestion...qindex:',qindex,'answer',answer)
       setOpenDialog(false)
-      if( car.position === FINISH_LINE ) {
+      if( (rights - wrongs) === FINISH_LINE ) {
           setOpenDialog(true)
           stopTheChallenge()
       } else if ( answer && qindex < questions.length ) {
@@ -152,7 +174,7 @@ const Challenge = () => {
     return (
         <Container>
             <Typography color="textSecondary" variant="h6">
-              Welcome {firstname} to DevRel500 challenge - You've been assigned to "{car.color}"" car
+                {greeting}
             </Typography>
             <Container >
                 <StyledImage src={`${process.env.REACT_APP_API_URL}/static/${question.filename}`} alt="" id="img" className="img" />

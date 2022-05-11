@@ -1,3 +1,4 @@
+from urllib import response
 from fastapi import Request
 from fastapi import FastAPI, HTTPException
 from fastapi import status as statuscode
@@ -15,12 +16,14 @@ from database import (
     create_user,
     fetch_user_by_id,
     start_the_challenge,
+    start_virtual_challenge,
     fetch_all_cars,
     fetch_leaderboard_users,
     get_car_payload,
     get_car_position,
     reset_car_in_db,
     update_user_time,
+    update_virtual_user_time,
 )
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -65,7 +68,7 @@ async def register_a_user(user: User):
     print(user)
     response = await create_user(user)
     if( response == {} ):
-        raise HTTPException(403, f"user with email {user.email} may already exists in DB")
+        raise HTTPException(403, f"user with email {user.email} have taken the challenge")
     return response
 
 @app.get("/user/{userid}", 
@@ -88,6 +91,17 @@ async def start_challenge(userid: str):
     if( response ):
         return response
     raise HTTPException(404, f"Can't signal start of challenge for user {userid}")
+
+@app.put("/startvirtual",
+         response_model=User,
+         description="Signal start the challenge and return current user document")
+async def start_challenge(userid: str):
+    user = await start_virtual_challenge(userid)
+    if( user ):
+        if( 'timetaken' in user):
+            raise HTTPException(404, f"User already taken challenge")
+        return user
+    raise HTTPException(404, f"Can't signal start of virtual challenge for user {userid}")
 
 async def send_command_to_car( url: str, payload: str ):
     if( environment_vars['car_simulation'] or payload is None ):
@@ -118,6 +132,13 @@ async def end_challenge(userid: str, carid: int):
     #raise HTTPException(404, f"Can't signal end of challenge for user {userid}")
     #return 404
 
+@app.put("/endvirtual",
+         response_model=User,
+         description="Signal end of the virtual challenge and record user time")
+async def end_virtual_challenge(userid: str):
+    print('end virtual challenge: userid=',userid)
+    return await update_virtual_user_time(userid)
+    
 @app.put("/score",
         description="Actions taken after user answer a question correctly or incorrectly")
 async def score_a_question(carid: int, weight: int):

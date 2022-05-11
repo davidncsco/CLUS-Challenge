@@ -11,6 +11,9 @@ import styled from 'styled-components';
 const USER_REGEX = /^[A-z][A-z0-9-_]{2,24}$/;
 const EMAIL_REGEX = /^[A-Za-z0-9]+[._]?[A-Za-z0-9]+[@]\w+[. ]\w{2,3}$/;
 
+// Virtual Event env var for Sandbox Virtual Event
+const VIRTUAL_EVENT = `${process.env.REACT_APP_VIRTUAL_EVENT}`
+
 const RegisterRectangle = styled.div`
     width: 400px;
     height: 460px;
@@ -45,6 +48,7 @@ const Registration = () => {
 
     const [userid,setUserId] = useState('');
     const [car,setCar] = useState('');
+    const [user,setUser] = useState('');
 
     useEffect(() => {
         userRef.current.focus();
@@ -84,32 +88,41 @@ const Registration = () => {
             }
         }
         fetchUrl(url)
+        console.log('VIRTUAL_EVENT=',VIRTUAL_EVENT)
     }, []);
 
     // Wait for response from the (promise) POST before navigate to the new page
     useEffect( () => {
-        console.log('Calling useEffect to start challenge...')
-        if( userid !== '' && car === '' ) {
-            const url = `${process.env.REACT_APP_API_URL}/start?userid=${userid}`
-            console.log(url)
-            async function fetchUrl(url) {
-                try {
-                    const json = await ky.put(url).json()
-                    console.log(json)
-                    setCar(json)
-                } catch( error ) {
-                    alert( `Can't assign car to user to start challenge ${error}`)
-                }
+        async function fetchUrl(url,setData) {
+            try {
+                const json = await ky.put(url).json()
+                console.log(json)
+                setData(json)
+            } catch( error ) {
+                alert( `Can't start challenge for user ${userid}, ${error}`)
             }
-            fetchUrl(url)
-        } else if( car !== '' ) {
-            console.log('userid',userid)
-            navigate("/challenge",{state:{first:firstname,userid:userid,car:car,questions:questions}})
-            setFirstname('')
-            setLastname('')
-            setEmail('')
         }
-    }, [userid, car]);
+        console.log('Calling useEffect to start challenge...')
+        if( VIRTUAL_EVENT === 'true') {
+            if( userid !== '' && user === '' ) {
+                const url = `${process.env.REACT_APP_API_URL}/startvirtual?userid=${userid}`
+                console.log(url)
+                fetchUrl(url,setUser)
+            } else if( user != '' ) {
+                console.log('userid',userid)
+                navigate("/challenge",{state:{user:user,userid:userid,questions:questions}})
+            }
+        } else {
+            if( userid !== '' && car === '' ) {
+                const url = `${process.env.REACT_APP_API_URL}/start?userid=${userid}`
+                console.log(url)
+                fetchUrl(url,setCar)
+            } else if( car !== '' ) {
+                console.log('userid',userid)
+                navigate("/challenge",{state:{first:firstname,userid:userid,car:car,questions:questions}})
+            }
+        }
+    }, [userid, car, user]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -135,10 +148,13 @@ const Registration = () => {
             console.log(json.id)
             setUserId(json.id)
         } catch (error) {
-            alert( `can't register user to database ${error}`)
+            alert( `Can't register user to database, user with email ${email} may have arealdy taken the challenge. ${error}`)
+            setFirstname('')
+            setLastname('')
+            setEmail('')
         }
 
-        errRef.current.focus();
+        userRef.current.focus()
     }
 
     return (

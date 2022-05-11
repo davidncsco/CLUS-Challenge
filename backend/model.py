@@ -6,7 +6,6 @@ class DemoQuestion(BaseModel):
     _id: str
     choices: list
     answer: list
-    prompt: Optional[str]
     weight: Optional[int]
     filename: str
 
@@ -14,6 +13,7 @@ class User(BaseModel):
     email: str
     first: str
     last: str
+    start: Optional[int] = 0
     timetaken: Optional[int] = 0
 
 class Car(BaseModel):

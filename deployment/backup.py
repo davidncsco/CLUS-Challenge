@@ -47,7 +47,8 @@ if __name__ == '__main__':
     # Backup the 'user' collection in DB. This script can be run as a crontab
     # e.g. Run backup every 5 minutes 
     # 5/* * * * * /usr/bin/python3 /home/devnet/backup
-    DB_CONNECT_URL = "mongodb://davidn:ciscopsdt@10.0.0.54:27017/"
+    # env variable overrides configuration in meta.json
+    DB_CONNECT_URL = os.environ.get('DB_CONNECT_URL','mongodb://davidn:ciscopsdt@10.0.0.54:27017/' )
     DB_NAME        = "devrel500"
     try:
         run_backup(DB_CONNECT_URL, DB_NAME, "user")

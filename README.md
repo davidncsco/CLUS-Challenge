@@ -1,4 +1,4 @@
-    # Pre-requisite: install docker and kubectl on your machine
+    # Pre-requisite: install node, docker and kubectl on your machine
     # Copy /etc/rancher/k3s/k3s.yaml from master node (10.0.0.60)
     # to your ~/.kube/config
 

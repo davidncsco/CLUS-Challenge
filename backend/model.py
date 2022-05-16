@@ -13,7 +13,7 @@ class User(BaseModel):
     email: str
     first: str
     last: str
-    start: Optional[int] = 0
+    start: Optional[int]
     timetaken: Optional[int] = 0
 
 class Car(BaseModel):

@@ -2,7 +2,9 @@
 FROM node:17.8.0-alpine as build-frontend
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
-ENV REACT_APP_API_URL http://devrel-500
+ENV REACT_APP_API_URL http://sjds-kworker-a-1:8000
+ENV REACT_APP_VIRTUAL_EVENT true
+ENV WDS_SOCKET_PORT 0
 COPY package.json .
 
 #COPY .env.development ./
@@ -17,3 +19,5 @@ RUN npm run build
 FROM nginx:1.20.2-alpine
 
 COPY --from=build-frontend /app/build/ /usr/share/nginx/html
+COPY ./static/questions /usr/share/nginx/html/static/questions
+#COPY ../backend/data/questions/ /usr/share/nginx/html/static

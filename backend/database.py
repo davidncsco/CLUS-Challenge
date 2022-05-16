@@ -5,28 +5,30 @@ from utils import get_time, get_uuid, get_meta
 
 # Read environment variables from meta file
 meta = get_meta()
-environments_vars = meta['env'][0]
+environment_vars = meta['env'][0]
 cars_list = meta['cars']
-DB_CONNECT_URL              = environments_vars['database_url']
-DB_NAME                     = environments_vars['database_name']
-MAX_QUESTIONS_TO_GENERATE   = environments_vars['questions_to_generate']
-CAR_SIMULATION              = environments_vars['car_simulation']
-CAR_URL_TEMPLATE            = environments_vars['car_url_template']
-CAR_BACKWARD_FACTOR         = environments_vars['car_backward_factor']
-VIRTUAL_EVENT               = environments_vars['virtual_event']        # Sandbox virtual event, skip all cars operations and update
 
+DB_NAME                     = environment_vars['database_name']
+MAX_QUESTIONS_TO_GENERATE   = environment_vars['questions_to_generate']
+CAR_SIMULATION              = environment_vars['car_simulation']
+CAR_URL_TEMPLATE            = environment_vars['car_url_template']
+VIRTUAL_EVENT               = environment_vars['virtual_event']        # Sandbox virtual event, skip all cars operations and update
+
+# env variable overrides configuration in meta.json
+DB_CONNECT_URL = os.environ.get('DB_CONNECT_URL',environment_vars['database_url'] )
+    
 try:
-    print('Connecting to MongoDB...')
+    print('Connecting to MongoDB with...',DB_CONNECT_URL)
     client = motor.motor_asyncio.AsyncIOMotorClient(DB_CONNECT_URL)
     client.server_info() # will throw an exception
 except:
-    print(f'Cannot connect DB with {DB_CONNECT_URL}')
+    print(f'Cannot connect to database with {DB_CONNECT_URL}')
     exit()
     
 database = client[DB_NAME]
 
 def get_environment_vars():
-    return environments_vars
+    return environment_vars
 
 async def fetch_one_question(qnumber: str):
     collection = database.question
@@ -110,14 +112,17 @@ async def update_user_time(userid: str, carid: int):
     collection = database.car
     filter = {'number': carid}
     car = await collection.find_one(filter)
+    print('update user time->',car)
     if car and 'start' in car:
         timetaken = get_time() - car['start']
         current_position = car['position']
-    print(f'Time taken for user {userid} is {timetaken} secs')
+        print(f'Time taken for user {userid} is {timetaken} secs')
+    else:
+        return 0
     collection = database.user
     filter = {'_id': userid }
     user = collection.find(filter)
-    if( user ):
+    if( user and timetaken > 0):
         print(f'update user time: {userid}, timetaken: {timetaken}')
         await collection.update_one(filter, {"$set": {"timetaken": timetaken}})
         return current_position
@@ -154,7 +159,9 @@ async def reset_car_in_db(carid: int) -> int:
         for key in { '_id','userid', 'start' }:  
             if key in document:
                 document.pop(key)
-        await collection.replace_one(filter,document)                                     
+        await collection.replace_one(filter,document)           
+    car = cars_list[carid-1]   # current car
+    car['position'] = 0                          
     return current_position
 
 async def fetch_leaderboard_users():
@@ -165,42 +172,30 @@ async def fetch_leaderboard_users():
         users.append(User(**document))
     return users
 
-async def get_car_position( carid: int ):
-    collection = database.car
-    filter = {'number': carid}
-    document = await collection.find_one(filter)
-    if( document ):
-        return document['position']
-    return 0
+def get_car_position( carid: int ):
+    car = cars_list[carid-1]   # current car
+    return car['position']
 
 async def set_car_position( carid: int, position: int ):
     collection = database.car
     filter = {'number': carid}
     document = await collection.find_one(filter)
     if( document ):
+        car = cars_list[carid-1]   # current car
+        car['position'] = position
         await collection.update_one(filter, {"$set": {"position": position}})
         return 1
     return 0
     
-async def get_car_payload(carid: int,weight: int):
-    ''' Get car payload by car id (car number) and set current car position
-        base on the value of weight and current car position
+def get_car_payload(carid: int,weight: int):
+    ''' Get car payload by car id (car number) and weight
     '''
     car = cars_list[carid-1]   # current car
-    current_position = await get_car_position(carid)
-    print(f'Getting payload, car #{carid}, current position={current_position}, weight={weight}')
-    new_position     = current_position + weight
-    if( new_position < 0 and weight < 0 ):
-        weight = current_position * -1
-        new_position = 0
-    await set_car_position(carid, new_position)
+    print('Getting car payload, car#',carid,' weight=',weight)
     if weight != 0:
         car_url = CAR_URL_TEMPLATE % car['ip']
-        direction = 'forward' if (weight > 0) else 'backward'
-        weight = abs(weight) * CAR_BACKWARD_FACTOR if (weight < 0) else weight
-        payload = '{"speed": %s,"weight": %s, "direction": "%s"}' % (car['speed'], weight, direction)
-        car['position'] = new_position
-        print(f'car #{carid}, new position {new_position}')
+        (speed,direction) = (car['speed'],'forward') if (weight > 0) else (car['backup_speed'],'backward')
+        payload = '{"speed": %s,"weight": %s, "direction": "%s"}' % (speed, abs(weight), direction)
         return (car_url,payload)
     else:
         return( None, None)

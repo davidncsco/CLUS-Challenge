@@ -1,5 +1,7 @@
 import React, { useState,useEffect } from "react";
 
+// This is a placeholder template for implementing the virtual race display
+// Not fully implemented yet.
 const CarRace = () => {
   const now = new Date().toLocaleTimeString();
   let [time, setTime] = useState(now);

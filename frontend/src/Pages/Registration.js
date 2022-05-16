@@ -76,11 +76,9 @@ const Registration = () => {
     useEffect(() => {
         console.log('Calling useEffect to fetch questions')
         const url = `${process.env.REACT_APP_API_URL}/questions`
-        console.log(url)
         async function fetchUrl(url) {
             try {
                const json = await ky.get(url).json()
-               console.log( json )
                console.log('questions fetched=',json.length)
                setQuestions(json)
             } catch( error ) {
@@ -108,7 +106,7 @@ const Registration = () => {
                 const url = `${process.env.REACT_APP_API_URL}/startvirtual?userid=${userid}`
                 console.log(url)
                 fetchUrl(url,setUser)
-            } else if( user != '' ) {
+            } else if( user !== '' ) {
                 console.log('userid',userid)
                 navigate("/challenge",{state:{user:user,userid:userid,questions:questions}})
             }

@@ -11,3 +11,4 @@ module.exports = function(app) {
   app.use('/user',createProxyMiddleware({target: {url},changeOrigin: true,}));
   app.use('/reset',createProxyMiddleware({target: {url},changeOrigin: true,}));
 };
+

@@ -61,7 +61,6 @@ const Challenge = () => {
     let greeting  = undefined
     let car       = undefined
     let user      = undefined
-    let current_position = 0
     
     if( VIRTUAL_EVENT === 'true' ) {
       user = location.state.user
@@ -116,6 +115,20 @@ const Challenge = () => {
       }
     }
 
+    async function resetCar() {
+      if (VIRTUAL_EVENT !== 'true') {
+        console.log('Reset car')
+        const url = `${process.env.REACT_APP_API_URL}/reset/${car.number}`
+        console.log(url)
+        try {
+          const json = await ky.put(url)
+          console.log( json )
+        } catch(error) {
+          alert(`Can't reset car# ${car.number} ${error}, please notify admin`)
+        }
+      }
+    }
+
     useEffect( () => {
       console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
       if( answer !== undefined ) {    // answer is right or wrong
@@ -136,10 +149,11 @@ const Challenge = () => {
       }
     }, [openDialog])
 
-    function stopTheChallenge() {
+    async function stopTheChallenge() {
       console.log('!!! End of Challenge')
       setEndOfChallenge(true)
-      recordUserTime()
+      await recordUserTime()
+      await resetCar()
       play()
     }
 
@@ -177,7 +191,7 @@ const Challenge = () => {
                 {greeting}
             </Typography>
             <Container >
-                <StyledImage src={`${process.env.REACT_APP_API_URL}/static/${question.filename}`} alt="" id="img" className="img" />
+                <StyledImage src={`/static/questions/${question.filename}`} alt="" id="img" className="img" />
             </Container>
             <Container className={classes.margin}>
                 <Typography variant="h6">

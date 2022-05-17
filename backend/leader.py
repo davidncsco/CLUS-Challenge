@@ -11,7 +11,7 @@ from database import (
 app = FastAPI()
 
 # Added to create path to static files for all question images
-app.mount("/static", StaticFiles(directory="data/questions"),name="static")
+# app.mount("/static", StaticFiles(directory="data/questions"),name="static")
 
 # Migrate code from Leaderboard project here for now. This should be done in ReactJS as a
 # frontend component.        
@@ -34,4 +34,5 @@ async def get_leaderboard_users(request: Request):
             users_dict.append(user)
             count += 1
     df = pd.DataFrame(users_dict)
+    df.index = df.index + 1     # Change index starting from 1 instead of 0g
     return templates.TemplateResponse('leaders.html', context={'request': request, 'data': df.to_html()})

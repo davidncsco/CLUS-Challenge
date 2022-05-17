@@ -2,8 +2,8 @@
 FROM node:17.8.0-alpine as build-frontend
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
-ENV REACT_APP_API_URL http://sjds-kworker-a-1:8000
-ENV REACT_APP_VIRTUAL_EVENT true
+ENV REACT_APP_API_URL http://devrel-500
+ENV REACT_APP_VIRTUAL_EVENT false
 ENV WDS_SOCKET_PORT 0
 COPY package.json .
 

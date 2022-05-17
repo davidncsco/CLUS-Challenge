@@ -40,7 +40,7 @@ environment_vars = get_environment_vars()
 VIRTUAL_EVENT    = environment_vars['virtual_event']        # Sandbox virtual event
 
 # Added to create path to static files for all question images
-app.mount("/static", StaticFiles(directory="data/questions"),name="static")
+#app.mount("/static", StaticFiles(directory="data/questions"),name="static")
 
 @app.get("/")
 async def hello_world():
@@ -172,7 +172,19 @@ async def reset_car(carid: int):
 async def loaddb():
     return load_db()
     
-          
+@app.get("/rank/{email}")
+async def get_user_rank(email: str):
+    response = await fetch_leaderboard_users()
+    response.sort(key=lambda x: x.timetaken)
+    ranked = 1
+    timetaken = 0
+    for x in response:
+        if( (x.timetaken > 0) and (x.email == email) ):
+            timetaken = x.timetaken
+            break
+        elif( x.timetaken > 0 ):
+            ranked += 1
+    return { "ranked": ranked, "timetaken": timetaken }
 
 # Migrate code from Leaderboard project here for now. This should be done in ReactJS as a
 # frontend component.        

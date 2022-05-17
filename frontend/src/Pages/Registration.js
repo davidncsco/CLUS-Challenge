@@ -8,7 +8,7 @@ import './Registration.css';
 import styled from 'styled-components';
 
 // Regular expression use for input validation
-const USER_REGEX = /^[A-z][A-z0-9-_]{2,24}$/;
+const USER_REGEX = /^[A-z][A-z0-9-_]{1,24}$/;
 const EMAIL_REGEX = /^[A-Za-z0-9]+[._]?[A-Za-z0-9]+[@]\w+[. ]\w{2,3}$/;
 
 // Virtual Event env var for Sandbox Virtual Event
@@ -117,7 +117,7 @@ const Registration = () => {
                 fetchUrl(url,setCar)
             } else if( car !== '' ) {
                 console.log('userid',userid)
-                navigate("/challenge",{state:{first:firstname,userid:userid,car:car,questions:questions}})
+                navigate("/challenge",{state:{email:email,first:firstname,userid:userid,car:car,questions:questions}})
             }
         }
     }, [userid, car, user]);
@@ -180,7 +180,7 @@ const Registration = () => {
                 />
                 <p id="uidnote" className={firstnameFocus && firstname && !validFirstname ? "instructions" : "offscreen"}>
                     <FontAwesomeIcon icon={faInfoCircle} />
-                    3 to 25 characters.<br />
+                    2 to 25 characters.<br />
                     Must begin with a letter.<br />
                     Letters, numbers, underscores, hyphens allowed.
                 </p>
@@ -205,7 +205,7 @@ const Registration = () => {
                 />
                 <p id="uidnote" className={lastnameFocus && lastname && !validLastname ? "instructions" : "offscreen"}>
                     <FontAwesomeIcon icon={faInfoCircle} />
-                    4 to 24 characters.<br />
+                    2 to 24 characters.<br />
                     Must begin with a letter.<br />
                     Letters, numbers, underscores, hyphens allowed.
                 </p>

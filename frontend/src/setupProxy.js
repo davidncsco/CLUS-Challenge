@@ -10,5 +10,6 @@ module.exports = function(app) {
   app.use('/score',createProxyMiddleware({target: {url},changeOrigin: true,}));
   app.use('/user',createProxyMiddleware({target: {url},changeOrigin: true,}));
   app.use('/reset',createProxyMiddleware({target: {url},changeOrigin: true,}));
+  app.use('/rank',createProxyMiddleware({target: {url},changeOrigin: true,}));
 };
 

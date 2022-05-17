@@ -108,9 +108,9 @@
     ],
     "env": [
         { "questions_to_generate": 30,
-          "virtual_event": 1,
+          "virtual_event": 0,
           "car_simulation": 0,
-          "database_url": "mongodb://devnet:ciscopsdt@10.194.239.243:27017/",
+          "database_url": "mongodb://davidn:ciscopsdt@10.0.0.54:27017/",
           "database_name": "devrel500",
           "car_url_template": "http://%s:8888/chittybang"
         }

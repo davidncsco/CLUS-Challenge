@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import ky from 'ky';
 import AnimatedChoiceButtons from '../components/styles/Button.styled'
-import StopWatch from '../components/StopWatch'
+import ProgressBar from '../components/ProgressBar';
 import useSound from 'use-sound'
 import fanFare from '../Assets/fanfare.mp3'
 
@@ -38,7 +38,7 @@ const StyledImage = styled.img`
     object-fit: full-width;
 `;
 
-const FINISH_LINE = 15
+const FINISH_LINE = 6
 // Virtual Event env var for Sandbox Virtual Event
 const VIRTUAL_EVENT = `${process.env.REACT_APP_VIRTUAL_EVENT}`
 
@@ -52,11 +52,14 @@ const Challenge = () => {
     const [endofChallenge,setEndOfChallenge] = useState(false)
     const [wrongs, setWrongs] = useState(0)
     const [rights, setRights] = useState(0)
+    const [completed,setCompleted] = useState(0)
+    const [userRank,setUserRank] = useState({"ranked":0,"timetaken":0})
     const [play] = useSound(fanFare);
 
     // Information passing from registration page
     let location = useLocation()
     let firstname = undefined
+    let email     = undefined
     let userid    = undefined
     let greeting  = undefined
     let car       = undefined
@@ -65,11 +68,12 @@ const Challenge = () => {
     if( VIRTUAL_EVENT === 'true' ) {
       user = location.state.user
       firstname = user.first
+      email     = user.email
       userid    = location.state.userid
       greeting  = `Welcome to DevRel500 challenge ${firstname}`
-      console.log("Userid is ",userid)
     } else {
       car       = location.state.car
+      email     = location.state.email
       firstname = location.state.first
       userid    = location.state.userid
       greeting = `Welcome to DevRel500 challenge ${firstname} - You've been assigned to "${car.color}" car`
@@ -129,11 +133,27 @@ const Challenge = () => {
       }
     }
 
+    async function userRanking() {
+      console.log('Get User Ranking for user with email',email)
+      const url = `${process.env.REACT_APP_API_URL}/rank/${email}`
+      console.log(url)
+      try {
+        const json = await ky.get(url).json()
+        setUserRank(json)
+        console.log(json)
+      } catch(error) {
+        alert(`Can't get user ranking for user with email ${email} ${error}, please notify admin`)
+      }
+    }
+
     useEffect( () => {
       console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
       if( answer !== undefined ) {    // answer is right or wrong
         setOpenDialog(true)
         console.log('Current position',rights - wrongs)
+        if( rights - wrongs > 0 ) {
+          setCompleted( rights - wrongs )
+        }
         if( answer && qindex === questions.length ){
           stopTheChallenge()
         }
@@ -151,10 +171,12 @@ const Challenge = () => {
 
     async function stopTheChallenge() {
       console.log('!!! End of Challenge')
+      let ranking = undefined
       setEndOfChallenge(true)
-      await recordUserTime()
-      await resetCar()
       play()
+      await recordUserTime()
+      ranking = await userRanking()
+      await resetCar()
     }
 
     function handleOnEndOfGame() {
@@ -202,7 +224,7 @@ const Challenge = () => {
                     {choice}
                     </AnimatedChoiceButtons>
                 ))}
-                <StopWatch />
+                <ProgressBar bgcolor={"#6a1b9a"} completed={Math.floor(completed/FINISH_LINE * 100)}/>
                 {(openDialog) && (qindex <= questions.length) && (
                     <Dialog open={openDialog}>
                       <DialogTitle>{dialogTitle}</DialogTitle>
@@ -223,7 +245,8 @@ const Challenge = () => {
                     <DialogTitle><span style={{color: 'red'}}>!!! CONGRATULATIONS !!!</span></DialogTitle>
                     <DialogContent>
                       <DialogContentText>
-                        You have crossed the finish line. Among {qindex} questions, you answered {wrongs} time(s) incorrectly. Check the leaderboard for your standing.
+                        You have crossed the finish line in {userRank.timetaken} seconds. Among {qindex} questions, you answered {wrongs} time(s)
+                        incorrectly.  You're ranked# {userRank.ranked} on the leaderboard.
                         Please click on the trumpet to end the game!
                       </DialogContentText>
                     </DialogContent>

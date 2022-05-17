@@ -85,7 +85,7 @@ async def fetch_all_cars():
     return cars
     
 async def start_the_challenge(userid: str):
-    epoch = get_time()                 # record start time in car collection
+    epoch = round(get_time(False),2)                # record start time in car collection
     collection = database.car
     filter = { 'start': None }
     car = await collection.find_one(filter) # Find first available
@@ -96,7 +96,7 @@ async def start_the_challenge(userid: str):
     return car
 
 async def start_virtual_challenge(userid: str):
-    epoch = get_time()                 # record start time in car collection
+    epoch = round(get_time(False),2)                 # record start time in car collection
     collection = database.user
     filter = { '_id': userid }
     user = await collection.find_one(filter)
@@ -114,7 +114,8 @@ async def update_user_time(userid: str, carid: int):
     car = await collection.find_one(filter)
     print('update user time->',car)
     if car and 'start' in car:
-        timetaken = get_time() - car['start']
+        timetaken = get_time(False) - car['start']
+        timetaken = round(timetaken,2)
         current_position = car['position']
         print(f'Time taken for user {userid} is {timetaken} secs')
     else:
@@ -129,7 +130,7 @@ async def update_user_time(userid: str, carid: int):
     return 0
 
 async def update_virtual_user_time(userid: str):
-    epoch = get_time()
+    epoch = get_time(False)
     collection = database.user
     filter = { '_id': userid }
     user = await collection.find_one(filter)
@@ -137,7 +138,7 @@ async def update_virtual_user_time(userid: str):
         start = user['start']
         if( start > 0 ):
             print(f'update virtual user time: {userid}, start: {start}, end: {epoch}')
-            user['timetaken'] = epoch - start
+            user['timetaken'] = round(epoch - start,2)
             # remove _id and optional fields before replace
             for key in { '_id','start' }:  
                 if key in user:

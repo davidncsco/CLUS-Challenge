@@ -246,8 +246,8 @@ const Challenge = () => {
                     <DialogContent>
                       <DialogContentText>
                         You have crossed the finish line in {userRank.timetaken} seconds. Among {qindex} questions, you answered {wrongs} time(s)
-                        incorrectly.  You're ranked# {userRank.ranked} on the leaderboard.
-                        Please click on the trumpet to end the game!
+                        incorrectly.  Currently, you're ranked# {userRank.ranked} on the leaderboard.
+                        Please click on the trumpet to end the challenge!
                       </DialogContentText>
                     </DialogContent>
                     <DialogActions>

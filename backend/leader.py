@@ -18,7 +18,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory="data")
 app.mount("/template", StaticFiles(directory="data"),name="template")
     
-MAX_USERS_TO_DISPLAY = 20
+MAX_USERS_TO_DISPLAY = 15
 
 @app.get('/',
          description="Get users who completed challenge with time recorded")
@@ -34,5 +34,5 @@ async def get_leaderboard_users(request: Request):
             users_dict.append(user)
             count += 1
     df = pd.DataFrame(users_dict)
-    df.index = df.index + 1     # Change index starting from 1 instead of 0g
+    df.index = df.index + 1     # Change index starting from 1 instead of 0
     return templates.TemplateResponse('leaders.html', context={'request': request, 'data': df.to_html()})

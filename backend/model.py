@@ -14,7 +14,7 @@ class User(BaseModel):
     first: str
     last: str
     start: Optional[int]
-    timetaken: Optional[int] = 0
+    timetaken: Optional[float] = 0
 
 class Car(BaseModel):
     _id: str
@@ -23,5 +23,5 @@ class Car(BaseModel):
     color: str
     speed: int = 1000
     position: int = 0
-    start: Optional[int]
+    start: Optional[float]
     userid: Optional[str]

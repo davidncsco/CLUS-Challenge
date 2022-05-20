@@ -109,7 +109,7 @@ async def send_command_to_car( url: str, payload: str ):
     print(f'Send cmd to car {url} with payload {payload}')
     data = json.loads(payload)
     async with httpx.AsyncClient() as client:
-        response = await client.post(url,json=data) 
+        response = await client.post(url,json=data,timeout=20) 
         print('Sending POST cmd to car with response status code = ',response.status_code)
         if response:
             return response.status_code
@@ -155,12 +155,14 @@ async def score_a_question(carid: int, weight: int):
 # async def get_current_car_position(carid: int):
 #     return get_car_position(carid)
         
-@app.put("/reset/{carid}",
+@app.post("/reset/{carid}",
         description="Reset car position by car number and make it available for grab (if user quits mid-race)")
 async def reset_car(carid: int):
     if VIRTUAL_EVENT:
-        return None
+        return 200
     current_position = await reset_car_in_db(carid)
+    if( current_position == 0):
+        return 200
     print('Reset car from position ',current_position)
     weight = current_position * -1
     (url,payload) =  get_car_payload( carid, weight )

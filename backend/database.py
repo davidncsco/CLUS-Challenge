@@ -12,10 +12,10 @@ DB_NAME                     = environment_vars['database_name']
 MAX_QUESTIONS_TO_GENERATE   = environment_vars['questions_to_generate']
 CAR_SIMULATION              = environment_vars['car_simulation']
 CAR_URL_TEMPLATE            = environment_vars['car_url_template']
-VIRTUAL_EVENT               = environment_vars['virtual_event']        # Sandbox virtual event, skip all cars operations and update
 
 # env variable overrides configuration in meta.json
 DB_CONNECT_URL = os.environ.get('DB_CONNECT_URL',environment_vars['database_url'] )
+VIRTUAL_EVENT  = os.environ.get('VIRTUAL_EVENT',environment_vars['virtual_event'] ) # Sandbox setup
     
 try:
     print('Connecting to MongoDB with...',DB_CONNECT_URL)

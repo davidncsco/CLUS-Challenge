@@ -1,8 +1,12 @@
-FROM python:3.9.10-slim
+FROM python:3.9.10-slim as backend
 
 COPY ./utils.py ./main.py ./database.py ./model.py /app/
 COPY ./requirements.txt /app
 COPY ./data /app/data
+ARG DB_URL="mongodb://davidn:ciscopsdt@10.0.0.54:27017/"
+ARG VIRTUAL=0
+ENV DB_CONNECT_URL=${DB_URL}
+ENV VIRTUAL_EVENT=${VIRTUAL}
 
 WORKDIR /app
 

@@ -1,13 +1,14 @@
 # pull official base image
 FROM node:17.8.0-alpine as build-frontend
 WORKDIR /app
+ARG API_URL=http://devrel-500
+ARG VIRTUAL=false
 ENV PATH /app/node_modules/.bin:$PATH
-ENV REACT_APP_API_URL http://devrel-500
-ENV REACT_APP_VIRTUAL_EVENT false
+ENV REACT_APP_API_URL=${API_URL}
+ENV REACT_APP_VIRTUAL_EVENT=${VIRTUAL}
 ENV WDS_SOCKET_PORT 0
 COPY package.json .
 
-#COPY .env.development ./
 RUN npm install --silent
 
 COPY ./ /app/

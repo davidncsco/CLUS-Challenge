@@ -38,7 +38,7 @@ const StyledImage = styled.img`
     object-fit: full-width;
 `;
 
-const FINISH_LINE = 6
+const FINISH_LINE = 15
 // Virtual Event env var for Sandbox Virtual Event
 const VIRTUAL_EVENT = `${process.env.REACT_APP_VIRTUAL_EVENT}`
 
@@ -83,10 +83,10 @@ const Challenge = () => {
 
     // This is used for displaying cars simulation on screen (i.e. need to complete CarRace component)
     function saveCarPositionInLocalStorage(distance) {
-        console.log('Save car positon to localStorage, distance=',distance)
+        //console.log('Save car positon to localStorage, distance=',distance)
         // If new position negative then reset it to 0
         car.position = ((car.position+distance) >= 0)? car.position+distance : 0
-        console.log('Current car position',car.position)
+        //console.log('Current car position',car.position)
         //let car_position = {"number": car.number, "position": car.position}
         //localStorage.setItem("car",JSON.stringify(car_position))
     }
@@ -125,8 +125,7 @@ const Challenge = () => {
         const url = `${process.env.REACT_APP_API_URL}/reset/${car.number}`
         console.log(url)
         try {
-          const json = await ky.put(url)
-          console.log( json )
+          return await ky.post(url,{timeout: 25000})
         } catch(error) {
           alert(`Can't reset car# ${car.number} ${error}, please notify admin`)
         }
@@ -134,7 +133,7 @@ const Challenge = () => {
     }
 
     async function userRanking() {
-      console.log('Get User Ranking for user with email',email)
+      //console.log('Get User Ranking for user with email',email)
       const url = `${process.env.REACT_APP_API_URL}/rank/${email}`
       console.log(url)
       try {
@@ -147,7 +146,7 @@ const Challenge = () => {
     }
 
     useEffect( () => {
-      console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
+      //console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
       if( answer !== undefined ) {    // answer is right or wrong
         setOpenDialog(true)
         console.log('Current position',rights - wrongs)
@@ -161,7 +160,7 @@ const Challenge = () => {
     }, [answer,qindex]);
 
     useEffect( () => {
-      console.log('Enter useEffect for openDialog',openDialog,answer)
+      //console.log('Enter useEffect for openDialog',openDialog,answer)
       if( (answer !== undefined) && (qindex < questions.length) ) {
           // Compute distance to go back/forth for the car
           let distance = (answer ? 1: -1)
@@ -169,13 +168,16 @@ const Challenge = () => {
       }
     }, [openDialog])
 
+    const sleep = (milliseconds) => {
+      return new Promise(resolve => setTimeout(resolve, milliseconds))
+    }
+    
     async function stopTheChallenge() {
       console.log('!!! End of Challenge')
-      let ranking = undefined
       setEndOfChallenge(true)
       play()
       await recordUserTime()
-      ranking = await userRanking()
+      await userRanking()
       await resetCar()
     }
 
@@ -184,7 +186,7 @@ const Challenge = () => {
     }
 
     function handleOnclick(choice) {    
-        console.log('Enter handleOnClick...qindex:',qindex,'answer',answer)
+        //console.log('Enter handleOnClick...qindex:',qindex,'answer',answer)
         let result = question.answer.includes(choice)
         setDialogTitle(result ? 'That is correct!' : 'Incorrect!!!')
         setWrongs(result ? wrongs : wrongs+1 )
@@ -194,13 +196,13 @@ const Challenge = () => {
     }
 
     function handleNextQuestion() {
-      console.log('Enter handleNextQuestion...qindex:',qindex,'answer',answer)
+      //console.log('Enter handleNextQuestion...qindex:',qindex,'answer',answer)
       setOpenDialog(false)
       if( (rights - wrongs) === FINISH_LINE ) {
           setOpenDialog(true)
           stopTheChallenge()
       } else if ( answer && qindex < questions.length ) {
-          console.log('Index increment, set next question...')
+          //console.log('Index increment, set next question...')
           setNextQuestion(questions[qindex])
           setQIndex(qindex+1)
       }

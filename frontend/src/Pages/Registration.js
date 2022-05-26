@@ -9,7 +9,8 @@ import styled from 'styled-components';
 
 // Regular expression use for input validation
 const USER_REGEX = /^[A-z][A-z0-9-_]{1,24}$/;
-const EMAIL_REGEX = /^[A-Za-z0-9]+[._]?[A-Za-z0-9]+[@]\w+[. ]\w{2,3}$/;
+//const EMAIL_REGEX = /^[A-Za-z0-9]+[._]?[A-Za-z0-9]+[@]\w+[. ]\w{2,3}$/;
+const EMAIL_REGEX = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
 // Virtual Event env var for Sandbox Virtual Event
 const VIRTUAL_EVENT = `${process.env.REACT_APP_VIRTUAL_EVENT}`
@@ -74,7 +75,7 @@ const Registration = () => {
     const [questions,setQuestions] = useState('')
 
     useEffect(() => {
-        console.log('Calling useEffect to fetch questions')
+        //console.log('Calling useEffect to fetch questions')
         const url = `${process.env.REACT_APP_API_URL}/questions`
         async function fetchUrl(url) {
             try {
@@ -100,7 +101,7 @@ const Registration = () => {
                 alert( `Can't start challenge for user ${userid}, ${error}`)
             }
         }
-        console.log('Calling useEffect to start challenge...')
+        //console.log('Calling useEffect to start challenge...')
         if( VIRTUAL_EVENT === 'true') {
             if( userid !== '' && user === '' ) {
                 const url = `${process.env.REACT_APP_API_URL}/startvirtual?userid=${userid}`

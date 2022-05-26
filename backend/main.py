@@ -22,6 +22,7 @@ from database import (
     reset_car_in_db,
     update_user_time,
     update_virtual_user_time,
+    fetch_all_cars,
 )
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -142,7 +143,7 @@ async def score_a_question(carid: int, weight: int):
     ''' 
     if VIRTUAL_EVENT:
         return None
-    current_position = get_car_position(carid)
+    current_position = await get_car_position(carid)
     new_position = current_position + weight
     if( new_position >= 0 ):
         (url,payload) = get_car_payload( carid,weight )
@@ -150,10 +151,10 @@ async def score_a_question(carid: int, weight: int):
         await set_car_position(carid,new_position)
         return await send_command_to_car( url,payload )
 
-# @app.get("/position/{carid}",
-#          description="Get current car position from database")
-# async def get_current_car_position(carid: int):
-#     return get_car_position(carid)
+@app.get("/position/{carid}",
+         description="Get current car position from database")
+async def get_current_car_position(carid: int):
+    return await get_car_position(carid)
         
 @app.post("/reset/{carid}",
         description="Reset car position by car number and make it available for grab (if user quits mid-race)")
@@ -173,6 +174,10 @@ async def reset_car(carid: int):
           description="Initialize question and car collections in the DB")
 async def loaddb():
     return load_db()
+
+@app.get("/loadcars")
+async def load_car_data_from_db():
+    return await fetch_all_cars()
     
 @app.get("/rank/{email}")
 async def get_user_rank(email: str):

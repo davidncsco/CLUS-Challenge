@@ -21,7 +21,8 @@ class Car(BaseModel):
     number: int
     ip: str
     color: str
-    speed: int = 1000
+    speed: int = 500
+    backup_speed: int = 500
     position: int = 0
     start: Optional[float]
     userid: Optional[str]

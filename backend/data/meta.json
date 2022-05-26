@@ -102,12 +102,12 @@
         {   "_id": "Q100", "choices": ["A","B","C","D"], "answer" : ["B"], "filename": "Q100.png"  }
     ],
     "cars": [
-        {  "number": 1, "ip" : "10.20.0.11", "color": "Purple", "speed": 500, "backup_speed": 450, "position": 0 },
-        {  "number": 2, "ip" : "10.20.0.12", "color": "Yellow", "speed": 500, "backup_speed": 450, "position": 0 },
-        {  "number": 3, "ip" : "10.20.0.13", "color": "Blue", "speed": 500, "backup_speed": 450, "position": 0 }
+        {  "number": 1, "ip" : "10.20.0.11", "color": "Purple", "speed": 610, "backup_speed": 510, "position": 0 },
+        {  "number": 2, "ip" : "10.20.0.12", "color": "Yellow", "speed": 620, "backup_speed": 545, "position": 0 },
+        {  "number": 3, "ip" : "10.20.0.13", "color": "Blue",   "speed": 620, "backup_speed": 520, "position": 0 }
     ],
     "env": [
-        { "questions_to_generate": 30,
+        { "questions_to_generate": 40,
           "virtual_event": 0,
           "car_simulation": 0,
           "database_url": "mongodb://davidn:ciscopsdt@10.0.0.54:27017/",

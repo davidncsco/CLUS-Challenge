@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import ky from 'ky';
@@ -55,6 +55,7 @@ const Challenge = () => {
     const [completed,setCompleted] = useState(0)
     const [userRank,setUserRank] = useState({"ranked":0,"timetaken":0})
     const [play] = useSound(fanFare);
+    const mountedRef = useRef(true);
 
     // Information passing from registration page
     let location = useLocation()
@@ -76,7 +77,7 @@ const Challenge = () => {
       email     = location.state.email
       firstname = location.state.first
       userid    = location.state.userid
-      greeting = `Welcome to DevRel500 challenge ${firstname} - You've been assigned to "${car.color}" car`
+      greeting = `Welcome to DevRel500 challenge ${firstname} - You've been assigned to the "${car.color}" flag car`
     }
     const questions = location.state.questions
     const [question,setNextQuestion] = useState(questions[qindex-1]);
@@ -107,7 +108,7 @@ const Challenge = () => {
     }
 
     async function recordUserTime() {
-      console.log('Send KY command to record user time')
+      console.log('Recording user time...')
       const route = (VIRTUAL_EVENT === 'true') ? `endvirtual?userid=${userid}` : `end?userid=${userid}&carid=${car.number}`
       const url   = `${process.env.REACT_APP_API_URL}/${route}`
       console.log(url)
@@ -121,11 +122,11 @@ const Challenge = () => {
 
     async function resetCar() {
       if (VIRTUAL_EVENT !== 'true') {
-        console.log('Reset car')
+        //console.log('Reset car')
         const url = `${process.env.REACT_APP_API_URL}/reset/${car.number}`
         console.log(url)
         try {
-          return await ky.post(url,{timeout: 25000})
+          await ky.post(url,{timeout: 25000})
         } catch(error) {
           alert(`Can't reset car# ${car.number} ${error}, please notify admin`)
         }
@@ -155,6 +156,7 @@ const Challenge = () => {
         }
         if( answer && qindex === questions.length ){
           stopTheChallenge()
+          return () => { mountedRef.current = false }
         }
       }
     }, [answer,qindex]);
@@ -167,13 +169,9 @@ const Challenge = () => {
           sendCommandToCar(car,distance)
       }
     }, [openDialog])
-
-    const sleep = (milliseconds) => {
-      return new Promise(resolve => setTimeout(resolve, milliseconds))
-    }
     
     async function stopTheChallenge() {
-      console.log('!!! End of Challenge')
+      console.log('!!! End of Challenge !!!')
       setEndOfChallenge(true)
       play()
       await recordUserTime()
@@ -181,7 +179,7 @@ const Challenge = () => {
       await resetCar()
     }
 
-    function handleOnEndOfGame() {
+    async function handleOnEndOfGame() {
       navigate("/",{state:{}})
     }
 

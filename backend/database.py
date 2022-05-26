@@ -77,11 +77,12 @@ async def fetch_user_by_id(userid: str):
     return document
 
 async def fetch_all_cars():
+    global cars_list
     cars = []
     collection = database.car
-    cursor = collection.find({})
-    async for document in cursor:
+    async for document in collection.find({}):
         cars.append(Car(**document))
+    cars_list = list(map(lambda x: x.__dict__,cars))
     return cars
     
 async def start_the_challenge(userid: str):
@@ -160,9 +161,7 @@ async def reset_car_in_db(carid: int) -> int:
         for key in { '_id','userid', 'start' }:  
             if key in document:
                 document.pop(key)
-        await collection.replace_one(filter,document)           
-    car = cars_list[carid-1]   # current car
-    car['position'] = 0                          
+        await collection.replace_one(filter,document)                             
     return current_position
 
 async def fetch_leaderboard_users():
@@ -173,17 +172,19 @@ async def fetch_leaderboard_users():
         users.append(User(**document))
     return users
 
-def get_car_position( carid: int ):
-    car = cars_list[carid-1]   # current car
-    return car['position']
+async def get_car_position( carid: int ) -> int:
+    collection = database['car']
+    filter = {'number': carid}
+    document = await collection.find_one(filter)
+    if( document ):
+        return document['position']
+    return 0
 
 async def set_car_position( carid: int, position: int ):
     collection = database.car
     filter = {'number': carid}
     document = await collection.find_one(filter)
     if( document ):
-        car = cars_list[carid-1]   # current car
-        car['position'] = position
         await collection.update_one(filter, {"$set": {"position": position}})
         return 1
     return 0
@@ -191,11 +192,15 @@ async def set_car_position( carid: int, position: int ):
 def get_car_payload(carid: int,weight: int):
     ''' Get car payload by car id (car number) and weight
     '''
+    global cars_list
     car = cars_list[carid-1]   # current car
     print('Getting car payload, car#',carid,' weight=',weight)
     if weight != 0:
         car_url = CAR_URL_TEMPLATE % car['ip']
-        (speed,direction) = (car['speed'],'forward') if (weight > 0) else (car['backup_speed'],'backward')
+        if( weight <  -1):  # backup to starting position
+            (speed,direction) = (car['backup_speed'],'backward')
+        else:
+            (speed,direction) = (car['speed'],'forward') if (weight > 0) else (car['speed'],'backward')
         payload = '{"speed": %s,"weight": %s, "direction": "%s"}' % (speed, abs(weight), direction)
         return (car_url,payload)
     else:

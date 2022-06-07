@@ -39,7 +39,7 @@ def load_db():
         return
     
     env_vars = meta['env'][0]
-    DB_CONNECT_URL = env_vars['database_url']
+    DB_CONNECT_URL = os.environ.get('DB_CONNECT_URL',env_vars['database_url'] )
     DB_NAME        = env_vars['database_name'] 
     try:
         print('Connecting to MongoDB...')

@@ -51,6 +51,7 @@ const Challenge = () => {
     const [openDialog,setOpenDialog] = useState(false)
     const [endofChallenge,setEndOfChallenge] = useState(false)
     const [wrongs, setWrongs] = useState(0)
+    const [wrongs2, setWrongs2] = useState(0)
     const [rights, setRights] = useState(0)
     const [completed,setCompleted] = useState(0)
     const [userRank,setUserRank] = useState({"ranked":0,"timetaken":0})
@@ -65,7 +66,8 @@ const Challenge = () => {
     let greeting  = undefined
     let car       = undefined
     let user      = undefined
-    
+    let current_car_position = 0
+
     if( VIRTUAL_EVENT === 'true' ) {
       user = location.state.user
       firstname = user.first
@@ -150,8 +152,10 @@ const Challenge = () => {
       //console.log('Enter userEffect...qindex=',qindex,'answer=',answer)
       if( answer !== undefined ) {    // answer is right or wrong
         setOpenDialog(true)
-        console.log('Current position',rights - wrongs)
+
         if( rights - wrongs > 0 ) {
+          current_car_position = rights - wrongs
+          console.log('Current position',current_car_position)
           setCompleted( rights - wrongs )
         }
         if( answer && qindex === questions.length ){
@@ -166,7 +170,12 @@ const Challenge = () => {
       if( (answer !== undefined) && (qindex < questions.length) ) {
           // Compute distance to go back/forth for the car
           let distance = (answer ? 1: -1)
-          sendCommandToCar(car,distance)
+          if( current_car_position >= 0 ) {
+            sendCommandToCar(car,distance)
+            console.log('Current position in loop',current_car_position)
+            console.log('rights',rights, 'wrongs',wrongs)
+            setCompleted( rights - wrongs )
+          }
       }
     }, [openDialog])
     
@@ -187,8 +196,14 @@ const Challenge = () => {
         //console.log('Enter handleOnClick...qindex:',qindex,'answer',answer)
         let result = question.answer.includes(choice)
         setDialogTitle(result ? 'That is correct!' : 'Incorrect!!!')
-        setWrongs(result ? wrongs : wrongs+1 )
-        setRights(result ? rights+1 : rights )
+        if ( !result ) {
+            if( rights - wrongs > 0 || VIRTUAL_EVENT === 'true' )
+               setWrongs(wrongs+1)
+            else
+               setWrongs2(wrongs2+1)  // wrongs2 record # wrong answers when the car is at position 0
+        } else {
+          setRights(rights+1)
+        }
         setOpenDialog(true)
         setYourAnswer(result)
     }
@@ -245,7 +260,7 @@ const Challenge = () => {
                     <DialogTitle><span style={{color: 'red'}}>!!! CONGRATULATIONS !!!</span></DialogTitle>
                     <DialogContent>
                       <DialogContentText>
-                        You have crossed the finish line in {userRank.timetaken} seconds. Among {qindex} questions, you answered {wrongs} time(s)
+                        You have crossed the finish line in {userRank.timetaken} seconds. Among {qindex} questions, you answered {wrongs+wrongs2} time(s)
                         incorrectly.  Currently, you're ranked# {userRank.ranked} on the leaderboard.
                         Please click on the trumpet to end the challenge!
                       </DialogContentText>

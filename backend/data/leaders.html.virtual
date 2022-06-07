@@ -8,7 +8,7 @@
 
 <div class="leaderboard">
     <header>
-      <h1>LEADERBOARD</h1>
+      <h1>LEADERBOARD<br>(virtual)</h1>
       <img src="{{ url_for('template', path='/devvie.png') }}" alt="">
     </header>
     {{ data|safe }}

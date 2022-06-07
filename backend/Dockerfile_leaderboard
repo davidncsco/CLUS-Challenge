@@ -3,7 +3,6 @@ FROM python:3.9.10-slim
 COPY ./utils.py ./leader.py ./database.py ./model.py /app/
 COPY ./requirements.txt /app/requirements.txt
 COPY ./data /app/data
-ENV DB_CONNECT_URL mongodb://davidn:ciscopsdt@10.0.0.54:27017/
 
 WORKDIR /app
 

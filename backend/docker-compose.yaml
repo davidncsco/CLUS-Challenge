@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  backend:
+    image: xitrum/backend:${TAG}
+    build:
+      context: .
+      target: backend
+  leaderbard:
+    image: xitrum/leaderboard:${TAG}
+    build:
+      context: .
+      target: leaderboard

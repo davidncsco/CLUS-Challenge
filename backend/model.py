@@ -6,7 +6,6 @@ class DemoQuestion(BaseModel):
     _id: str
     choices: list
     answer: list
-    weight: Optional[int]
     filename: str
 
 class User(BaseModel):

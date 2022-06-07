@@ -7,6 +7,7 @@ from utils import get_time, get_uuid, get_meta
 meta = get_meta()
 environment_vars = meta['env'][0]
 cars_list = meta['cars']
+questions = []
 
 DB_NAME                     = environment_vars['database_name']
 MAX_QUESTIONS_TO_GENERATE   = environment_vars['questions_to_generate']
@@ -27,6 +28,15 @@ except:
     
 database = client[DB_NAME]
 
+async def fetch_questions():
+    global questions
+    
+    # Fetch all questions from DB
+    collection = database.question
+    cursor = collection.find({})
+    async for document in cursor:
+        questions.append(DemoQuestion(**document))
+        
 def get_environment_vars():
     return environment_vars
 
@@ -37,14 +47,14 @@ async def fetch_one_question(qnumber: str):
 
 async def fetch_many_questions(maxQuestions=MAX_QUESTIONS_TO_GENERATE):
     # Only return maxQuestions from the database in random order
-    questions = []
-    # Fetch all questions from DB
-    collection = database.question
-    cursor = collection.find({})
-    async for document in cursor:
-        questions.append(DemoQuestion(**document))
+    global questions
+
     # Generate a random list of maxQuestions questions from all questions in DB
     totalQuestions = len(questions)
+    if (totalQuestions == 0 ):
+        await fetch_questions()   # Just fetch it once from DB
+        totalQuestions = len(questions)
+        
     if (maxQuestions > 0):
         randomlist = random.sample(range(0, totalQuestions), maxQuestions )
     else:

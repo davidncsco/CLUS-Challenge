@@ -92,7 +92,8 @@ async def fetch_all_cars():
     collection = database.car
     async for document in collection.find({}):
         cars.append(Car(**document))
-    cars_list = list(map(lambda x: x.__dict__,cars))
+    if len(cars) > 0:   # Load car info from DB to cars_list
+        cars_list = list(map(lambda x: x.__dict__,cars))
     return cars
     
 async def start_the_challenge(userid: str):
